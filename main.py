@@ -1,148 +1,144 @@
+from numpy.lib.function_base import delete
+from automatic_segmentation import AutomaticSegmentation
 from clustering import Clustering
-from CAE_2D import CAE_2D
-from CAE_3D import CAE_3D
 from feature_extraction import FeatureExtraction
 from svm_classifier import SvmClassifier
+from CAE.cae import CAE
+from utils import util
+
 
 #-----------------------------------------------------#
-#                   Clustering                        #
+#             2D/3D Convolutional Autoencoder         #
 #-----------------------------------------------------#
-clus_seg_dir = 'data/feature_extraction/segmentation/'
-clus_out_dir= 'evaluation/clustering/ex1/'
-num_iters = 200
-num_clusters = 500
+cae_input_dir = 'data/CAE/'
+cae_model_dir = ''
 
-#-----------------------------------------------------#
-#             2D Convolutional Autoencoder              #
-#-----------------------------------------------------#
-cae2d_img_dir = 'data/CAE/imaging/'
-cae2d_seg_dir = 'data/CAE/segmentation/'
-cae2d_out_dir = 'evaluation/CAE/2D/ex4/'
-cae2d_model_dir = 'evaluation/CAE/2D/ex4/'
-cae2d_model_name = 'model_2D'
-patch_overlap=(0, 46, 46)
+#cae_patch_size = (200, 200, 200)
+cae_patch_size = (1, 48, 48) 
+patch_overlap=(0, 0, 0)
 min_labeled_pixels=0.7
-patch_size_2d = (1, 48, 48)
-
-#-----------------------------------------------------#
-#             3D Convolutional Autoencoder              #
-#-----------------------------------------------------#
-cae3d_img_dir = 'data/CAE/imaging/'
-cae3d_seg_dir = 'data/CAE/segmentation/'
-cae3d_out_dir = 'evaluation/CAE/3D/ex1/'
-cae3d_model_dir = 'evaluation/CAE/3D/ex1/'
-cae3d_model_name = 'model_3D'
 max_patches = 20
-patch_size_3d = (32, 32, 32)
 
-#-----------------------------------------------------#
-#               Feature Extraction                    #
-#-----------------------------------------------------#
-fe_img_dir = 'data/feature_extraction/imaging/'
-fe_seg_dir = 'data/feature_extraction/segmentation/'
-fe_clus_dir = 'evaluation/clustering/ex1/'
-fe_model_dir = 'evaluation/CAE/2D/ex4/'
-fe_model_name = 'model_2D'
-fe_out_dir = 'evaluation/feature_extraction/ex2/'
-#voxel_selection = 'highest_share'
-voxel_selection = 'center'
-
-#-----------------------------------------------------#
-#               Feature Extraction                    #
-#-----------------------------------------------------#
-svm_feature_dir = 'evaluation/feature_extraction/ex2/'
-svm_out_dir = 'evaluation/svm_classifier/ex1/'
-target = [1, 1, 0, 1, 0, 0, 1]
-
-
-
-#-----------------------------------------------------#
-#               Program Parameters                    #
-#-----------------------------------------------------#
 batch_size = 500
 epochs = 1
 batches_per_epoch = 1
 test_size = 0.5
-load_model_for_pred = False
 
+#-----------------------------------------------------#
+#               Automatic Segmentation                #
+#-----------------------------------------------------#
+as_model_name = 'model.best'
+as_model_dir = 'data/classification/as_model/'
+as_train_input_dir = 'data/classification/training/'
+as_pred_input_dir = 'data/classification/prediction/'
+as_patch_size = (160, 160, 80) 
+
+#-----------------------------------------------------#
+#                   Clustering                        #
+#-----------------------------------------------------#
+clus_train_input_dir = 'data/classification/training/'
+clus_pred_input_dir = 'data/classification/prediction/'
+
+num_iters = 5
+num_clusters = 4
+
+#-----------------------------------------------------#
+#               Feature Extraction                    #
+#-----------------------------------------------------#
+fe_train_input_dir = 'data/classification/training/'
+fe_pred_input_dir  = 'data/classification/prediction/'
+fe_model_dir = 'evaluation/CAE/2D/ex2/'
+
+fe_model_name = 'model_2D'
+voxel_selection = 'center' #'highest_share'
+
+#-----------------------------------------------------#
+#               SVM Classification                    #
+#-----------------------------------------------------#
+svm_train_feature_dir = 'evaluation/classification/features/training/ex1/'
+svm_train_target_dir = 'data/classification/training/'
+svm_pred_feature_dir = 'evaluation/classification/features/prediction/ex1/'
+svm_pred_target_dir = 'data/classification/prediction/'
+ffr_boundary = 0.85
+
+#-----------------------------------------------------#
+#               Program Parameters                    #
+#-----------------------------------------------------#
+autoencoder = False
+automatic_segmentation = False
 cluster = False
-autoencoder_2d = False
-autoencoder_3d = False
 extract_features = False
 classify = True
+delete_tmp = True
 
-#-----------------------------------------------------#
-#                  Start of Program                   #
-#-----------------------------------------------------#
+
+if autoencoder:
+    cae = CAE(  patch_size=cae_patch_size, 
+                patch_overlap=patch_overlap,
+                min_labeled_pixels=min_labeled_pixels,
+                test_size=test_size,
+                input_dir=cae_input_dir,
+                model_dir=cae_model_dir )
+
+    cae.train(batch_size, epochs, batches_per_epoch)
+    cae.predict(batch_size, delete_patches=True)
+    
+
+if automatic_segmentation:
+    asg = AutomaticSegmentation(    model_name=as_model_name,
+                                    patch_size=as_patch_size,
+                                    input_train_dir=as_train_input_dir,
+                                    input_pred_dir=as_pred_input_dir, 
+                                    model_dir=as_model_dir   )
+    
+    asg.run(type='training')
+    asg.run_postprocessing()
+
+    asg.run(type='prediction')
+    asg.run_postprocessing()
+
 
 if cluster:
     clustering = Clustering(    num_iters=num_iters,
                                 num_clusters=num_clusters,
-                                seg_dir=clus_seg_dir,
-                                out_dir=clus_out_dir    )
+                                train_input_dir=clus_train_input_dir,
+                                pred_input_dir=clus_pred_input_dir  )
 
-    clustering.run()
+    clustering.run(type='training')     
+    clustering.run(type='prediction') 
 
-
-if autoencoder_2d:
-    cae = CAE_2D(   model_name=cae2d_model_name,
-                    patch_size=patch_size_2d,
-                    patch_overlap=patch_overlap,
-                    min_labeled_pixels=min_labeled_pixels,
-                    test_size=test_size,
-                    load_model_for_pred=load_model_for_pred,
-                    img_dir=cae2d_img_dir,
-                    seg_dir=cae2d_seg_dir,
-                    out_dir=cae2d_out_dir, 
-                    model_dir=cae2d_model_dir   )
-    
-
-    if load_model_for_pred:
-        cae.predict(batch_size=batch_size)
-
-    else: 
-        cae.train(batch_size=batch_size, epochs=epochs, batches_per_epoch=batches_per_epoch)    
-        cae.predict(batch_size=batch_size)
-
-
-if autoencoder_3d:
-    cae = CAE_3D(   model_name=cae3d_model_name,
-                    patch_size=patch_size_3d,
-                    test_size=test_size,
-                    load_model_for_pred=load_model_for_pred,
-                    max_patches=max_patches,
-                    img_dir=cae3d_img_dir,
-                    seg_dir=cae3d_seg_dir,
-                    out_dir=cae3d_out_dir, 
-                    model_dir=cae3d_model_dir )
-    
-    cae.train(batch_size=batch_size, epochs=epochs, batches_per_epoch=batches_per_epoch)    
 
 
 
 if extract_features:
     fe = FeatureExtraction( model_name=fe_model_name,
-                            patch_size=patch_size_2d,
+                            patch_size=cae_patch_size,
                             patch_overlap=patch_overlap,
                             min_labeled_pixels=min_labeled_pixels,
                             num_clusters=num_clusters,
                             voxel_selection=voxel_selection,
                             max_patches=max_patches,
-                            img_dir=fe_img_dir,
-                            seg_dir=fe_seg_dir,
-                            clus_dir=fe_clus_dir,
-                            out_dir=fe_out_dir, 
-                            model_dir=fe_model_dir )
+                            model_dir=fe_model_dir,
+                            train_input_dir=fe_train_input_dir,
+                            pred_input_dir=fe_train_input_dir )
     
-    fe.run(batch_size=batch_size)
+    fe.run(batch_size=batch_size, type='training')
+    fe.run(batch_size=batch_size, type='prediction')
+
 
 
 if classify:
-    svm = SvmClassifier(    target=target,
-                            feature_dir=svm_feature_dir,
-                            test_size=test_size,
-                            out_dir=svm_out_dir )
+    svm = SvmClassifier(    train_feature_dir=svm_train_feature_dir,
+                            train_target_dir=svm_train_target_dir,
+                            pred_feature_dir=svm_pred_feature_dir,
+                            pred_target_dir=svm_pred_target_dir,
+                            ffr_boundary=ffr_boundary   )
+                            
+    svm.train()
+    svm.predict()
 
-    svm.run()
+
+if delete_tmp:
+    util.delete_tmp_files()
     
 

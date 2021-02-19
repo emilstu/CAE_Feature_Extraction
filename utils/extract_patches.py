@@ -12,6 +12,7 @@ from sklearn.utils import check_array, check_random_state
 import numbers
 from numpy.lib.stride_tricks import as_strided
 import shutil
+from tqdm import tqdm
 
 
 def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, patch_size=(1, 48, 48), patch_overlap=(0, 0, 0), min_labeled_pixels=0.0):
@@ -20,13 +21,12 @@ def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
     out_dir_seg = ''
     out_dir_clus = ''
 
+
+    print(f'\n\nExtracting patches from: {img_filenames}')
     # Make out directories for patches depending on assignment 
     if clus_filenames is not None:
-        print(img_filenames, len(img_filenames))
-        print(clus_filenames, len(clus_filenames))
-
-        out_dir_img = 'data/feature_extraction/2D/patches/img/'
-        out_dir_clus = 'data/feature_extraction/2D/patches/clus/'
+        out_dir_img = 'tmp/classification/2D/patches/img/'
+        out_dir_clus = 'tmp/classification/2D/patches/clus/'
 
         # Start with brand new directories 
         if os.path.exists(out_dir_img):
@@ -38,8 +38,8 @@ def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
         os.makedirs(out_dir_clus)
 
     elif seg_filenames is not None:
-        out_dir_img = 'data/CAE/2D/patches/img/'
-        out_dir_seg = 'data/CAE/2D/patches/seg/'
+        out_dir_img = 'tmp/CAE/2D/patches/img/'
+        out_dir_seg = 'tmp/CAE/2D/patches/seg/'
 
         # Start with brand new directories 
         if os.path.exists(out_dir_img):
@@ -51,7 +51,7 @@ def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
         os.makedirs(out_dir_seg)
     
     else:
-        out_dir_img = 'data/CAE/2D/patches/img/'
+        out_dir_img = 'tmp/CAE/2D/patches/img/'
         
         if os.path.exists(out_dir_img):
             shutil.rmtree(out_dir_img)
@@ -62,9 +62,8 @@ def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
     patch_seg_filenames = []
     patch_clus_filenames = []
     num_of_patches = 0
-    
     # Create patches with minimum number of pixels from segmentation pr patch
-    for i in range(1):
+    for i in tqdm(range(len(img_filenames)), leave=False):
         if clus_filenames is not None:
             subject = tio.Subject(
                 img=tio.Image(img_filenames[i], type=tio.INTENSITY),
@@ -118,6 +117,7 @@ def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
                 patch_img_filenames.append(out_dir_img + f'img_patch_{num_of_patches}.nii.gz')
 
                 num_of_patches += 1
+    print(f'Finished extracting patches from: {img_filenames}')
 
     patch_img_filenames = np.array(patch_img_filenames)
     patch_seg_filenames = np.array(patch_seg_filenames)
@@ -164,14 +164,12 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
     out_dir_seg = ''
     out_dir_clus = ''
 
+    print(f'\n\nExtracting patches from: {img_filenames}')
     # Make out directories for patches depending on assignment 
     if clus_filenames is not None:
         
-        print(img_filenames, len(img_filenames))
-        print(clus_filenames, len(clus_filenames))
-
-        out_dir_img = 'data/feature_extraction/3D/patches/img'
-        out_dir_clus = 'data/feature_extraction/3D/patches/clus'
+        out_dir_img = 'tmp/classification/3D/patches/img'
+        out_dir_clus = 'tmp/classification/3D/patches/clus'
 
         # Start with brand new directories 
         if os.path.exists(out_dir_img):
@@ -183,12 +181,9 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
         os.makedirs(out_dir_clus)
 
     elif seg_filenames is not None:
-   
-        print(img_filenames, len(img_filenames))
-        print(seg_filenames, len(seg_filenames))
 
-        out_dir_img = 'data/CAE/3D/patches/img/'
-        out_dir_seg = 'data/CAE/3D/patches/seg/'
+        out_dir_img = 'tmp/CAE/3D/patches/img/'
+        out_dir_seg = 'tmp/CAE/3D/patches/seg/'
 
         # Start with brand new directories 
         if os.path.exists(out_dir_img):
@@ -200,9 +195,7 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
         os.makedirs(out_dir_seg)
     
     else:
-        out_dir_img = 'data/CAE/3D/patches/img/'
-
-        print(img_filenames, len(img_filenames))
+        out_dir_img = 'tmp/CAE/3D/patches/img/'
 
         if os.path.exists(out_dir_img):
             shutil.rmtree(out_dir_img)
@@ -212,7 +205,7 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
     img_all_patches = []
     clus_all_patches = []
     
-    for i in range(len(img_filenames)):
+    for i in tqdm(range(len(img_filenames)), leave=False):
         img = nib.load(img_filenames[i])
         seg = nib.load(seg_filenames[i])
         if clus_filenames is not None:
@@ -277,14 +270,11 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
         if clus_filenames is not None:
             clus_patches = clus_patches.reshape(-1, p_x, p_y, p_z, n_colors)
         
-        print(img_patches.shape)
-        print(img_patches.reshape((n_patches, p_x, p_y, p_z)).shape)
-
         
         img_all_patches = append_patches_to_list(img_patches, img_all_patches)
         if clus_filenames is not None:
             clus_all_patches = append_patches_to_list(clus_patches, clus_all_patches)
-
+    print(f'Finished extracting patches from: {img_filenames}')
     return img_all_patches, clus_all_patches
 
 
@@ -385,7 +375,6 @@ def append_patches_to_list(patches, append_list):
     res = append_list
     for i in range(patches.shape[0]):
         res.append(patches[i])
-    print(np.asarray(res).shape)
     return res
 
 

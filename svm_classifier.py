@@ -7,49 +7,66 @@ from utils import util
 import random
 
 class SvmClassifier:
-    def __init__(self, target, test_size, feature_dir, out_dir):
-        """
-        num_iters (int): Number of iterations of kmeans
-        num_clusters (int): Number of clusters
-        seg_dir (string): Direcorty of segmentations to cluster
-        out_dir (string): Where to store the results
+    def __init__(self, train_feature_dir, train_target_dir, pred_feature_dir, pred_target_dir, ffr_boundary):
+        self.train_feature_dir = train_feature_dir
+        self.train_target_dir = train_target_dir
+        self.pred_feature_dir = pred_feature_dir
+        self.pred_target_dir = pred_target_dir
+        self.ffr_boundary = ffr_boundary
         
-        """
-        self.target = np.array(target)
-        self.test_size = test_size
-        self.features = util.load_features(feature_dir)
-        self.out_dir = out_dir
-
-        # Create out directory for CAE if it doesn't exists 
-        if not os.path.exists(self.out_dir):
-            os.makedirs(self.out_dir)
-
-
-    def run(self):
-        print(self.features.shape)
-        print(self.target.shape)
+        self.clf = svm.SVC(kernel='rbf')
         
-        # Split dataset into training set and test set
-        f_train, f_test, t_train, t_test = train_test_split(self.features, self.target, test_size=self.test_size)
+        # Create out dirs if it doesn't exists 
+        if not os.path.exists('evaluation/classification/svm/'):
+            os.makedirs('evaluation/classification/svm/')
+
+
+        # Create out directory
+        self.out_dir = util.get_next_folder_name('evaluation/classification/svm/', pattern='ex')
+        os.makedirs(self.out_dir)
+
+     
+
+    def train(self):
+        print('\n\nStart training of SVM classifier... \n')
+        features = util.load_features(self.train_feature_dir)    
+        target = util.ffr_values_to_target_list(self.train_target_dir, self.ffr_boundary)
+            
+        # Train the model using the training sets
+        self.clf.fit(features, target)
+
+        # Save model
+        util.save_svm_model(model=self.clf, model_name='svm', out_dir=self.out_dir)
+
+
+    def predict(self, model_dir=None):
+        print('\n\nStart prediction of SVM classifier... \n')
+        features = util.load_features(self.pred_feature_dir)
+        target = util.ffr_values_to_target_list(self.pred_target_dir, self.ffr_boundary)
+
+        # Load model if model_dit != None
+        if model_dir is not None:
+            self.clf = util.load_svm_model(model_name='svm', model_dir=model_dir)
+
+        #Predict the unseen data
+        pred = self.clf.predict(features) 
+
         
-        print(f_train.shape, f_test.shape)
-        print(t_train.shape, t_test.shape)
-
-        #Create a svm classifier with radial basis kernel
-        clf = svm.SVC(kernel='rbf')
-
-        #Train the model using the training sets
-        clf.fit(f_train, t_train)
-
-        #Predict the response for test dataset
-        t_pred = clf.predict(f_test) 
-
         # Model Accuracy: how often is the classifier correct?
-        print("Accuracy:",metrics.accuracy_score(t_test, t_pred))
-
+        acc = metrics.accuracy_score(target, pred)
+        
         # Model Precision: what percentage of positive tuples are labeled as such?
-        print("Precision:",metrics.precision_score(t_test, t_pred))
-
+        prec = metrics.precision_score(target, pred)
+        
         # Model Recall: what percentage of positive tuples are labelled as such?
-        print("Recall:",metrics.recall_score(t_test, t_pred))
+        rec = metrics.recall_score(target, pred)
+
+        # Print results
+        print("\nAccuracy:", acc)
+        print("Precision:", prec)
+        print("Recall\n:", rec)
+
+        # Save model and results
+        util.save_svm_results(accuracy=acc, precision=prec, recall=rec, out_dir=self.out_dir)
+    
     

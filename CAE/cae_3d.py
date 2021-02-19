@@ -16,28 +16,24 @@ from keras.layers.convolutional import Convolution3D, MaxPooling3D, UpSampling3D
 
 
 class CAE_3D:
-    def __init__(self, model_name, patch_size, test_size, load_model_for_pred, max_patches, img_dir, seg_dir, out_dir, model_dir=None):
+    def __init__(self, model_name, patch_size, min_labeled_pixels, test_size, max_patches, input_dir, out_dir):
         """
         model_name (string): Name of model
         patch_size (tuple): The size of the patches, e.g. (1, 48, 48)
         patch_overlap (tuple): The overlap between patches, e.g. (1, 18, 18)
         test_size (float): The test-train split percentage - e.g. 0.1 for using 10 % of the date for testing and 90 % for training 
-        load_model_for_pred (boolean): Boolean to specifiy if CAE should be loaded (True) or trained (False)
         img_dir (string): Direcorty of images
         seg_dir (string): Direcorty of segmentations
         out_dir (string): Where to store the results from training and predicting
-        model_dir (string): Directory of model which has to be specified if model is loaded (i.e load_model_for_pred=True))
         
         """
         self.model_name = model_name
         self.patch_size = patch_size
         self.test_size = test_size
-        self.load_model_for_pred = load_model_for_pred
+        self.min_labeled_pixels = min_labeled_pixels
         self.max_patches = max_patches
-        self.img_dir = img_dir
-        self.seg_dir = seg_dir
+        self.input_dir = input_dir
         self.out_dir = out_dir
-        self.model_dir = model_dir
         
         self.autoencoder = Model()
         self.patch_train_list = []
@@ -45,18 +41,15 @@ class CAE_3D:
         self.patch_train = []
         self.patch_test = []
 
-        self.img_filenames = util.get_nifti_filenames(img_dir)
-        self.seg_filenames = util.get_nifti_filenames(seg_dir)
+        self.img_filenames = util.get_paths_from_tree(input_dir, 'imaging')
+        self.seg_filenames = util.get_paths_from_tree(input_dir, 'segmentation')
 
-        # Create out directory for CAE if it doesn't exists 
-        if not os.path.exists(self.out_dir):
-            os.makedirs(self.out_dir)
 
-        self.extract_patches()
-
-        if self.load_model_for_pred:
-            self.autoencoder = util.load_json_model(self.model_name, self.model_dir)
-
+    
+    def load():
+        #Load saved patches
+        #self.autoencoder = util.load_cae_model(self.model_name, self.model_dir)
+        pass
 
     def extract_patches(self):
         # Extract patches and save to disk
@@ -89,13 +82,12 @@ class CAE_3D:
         #self.patch_test = util.load_patches(self.patch_test_list[:num_test_samples])
     
         # Print some useful info 
-        print(f'Number of training samples: {num_train_samples}')
+        print(f'\nNumber of training samples: {num_train_samples}')
         print(f'Number of test samples: {num_test_samples}')
         print(f'train data shape: {self.patch_train.shape}')
         print(f'test data shape: {self.patch_test.shape}')
-        print('\n')
 
-        print('Before normalizing: ')
+        print('\nBefore normalizing: ')
         print(f'Pixel max-value train data: {np.max(self.patch_train)}')
         print(f'Pixel max-value test data: {np.max(self.patch_test)}')
         print('\n')
@@ -105,11 +97,10 @@ class CAE_3D:
         self.patch_test = util.normalize_data(self.patch_test)
         
         # Print some useful info
-        print('After normalizing: ')
+        print('\nAfter normalizing: ')
         print(f'Pixel max-value train data: {np.max(self.patch_train)}')
         print(f'Pixel max-value test data: {np.max(self.patch_train)}')
-        print('\n')
-        print(f'input shape = ({self.patch_size[1]}, {self.patch_size[2]}, 1)')
+        print(f'\ninput shape = ({self.patch_size[1]}, {self.patch_size[2]}, 1)')
 
         inp = Input(shape=(self.patch_size[0], self.patch_size[0], self.patch_size[0], 1))
         e = Convolution3D(16, (5, 5, 5), activation='elu', padding='same')(inp)
@@ -149,7 +140,7 @@ class CAE_3D:
 
 
         # Save model
-        util.save_json_model(self.autoencoder, self.model_name, self.out_dir)
+        util.save_cae_model(self.autoencoder, self.model_name, self.out_dir)
 
         # Save training history 
         plt.plot(history.history['loss'])
@@ -162,33 +153,11 @@ class CAE_3D:
 
 
     def predict(self, batch_size):
-        # Make predictions 
-        pred = self.autoencoder.predict(self.patch_test, verbose=1, batch_size=batch_size)
-        
-        # Save results to csv
-        #mse = np.mean(np.power(patch_test - pred, 2), axis=1)
-        #error_df = pd.DataFrame({'Reconstruction_error': mse, 'True_class': patch_test}, index=[0])
-        #error_df.to_csv(out_dir + "results.csv", sep='\t')
-
-        # Save results to image 
-        plt.figure(figsize=(20, 4))
-        print("Test Images")
-        for i in range(10):
-            plt.subplot(2, 10, i+1)
-            plt.imshow(self.patch_test[i, ..., 0], cmap='gray')
-        #plt.show()
-        plt.savefig(self.out_dir + 'org.png')    
-
-        plt.figure(figsize=(20, 4))
-        print("Reconstruction of Test Images")
-        for i in range(10):
-            plt.subplot(2, 10, i+1)
-            plt.imshow(pred[i, ..., 0], cmap='gray')  
-        #plt.show()
-        plt.savefig(self.out_dir + 'rec.png')
+        pass
 
 
-
+    def delete_patches(self):
+        pass
 
 
 

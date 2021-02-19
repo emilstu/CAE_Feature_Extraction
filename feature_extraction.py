@@ -5,10 +5,11 @@ from keras.models import model_from_json
 import numpy as np
 from collections import Counter
 import statistics
+from tqdm import tqdm
 
 
 class FeatureExtraction:
-    def __init__(self, model_name, patch_size, patch_overlap, min_labeled_pixels, num_clusters, voxel_selection, max_patches, img_dir, seg_dir, clus_dir, out_dir, model_dir=None):
+    def __init__(self, model_name, patch_size, patch_overlap, min_labeled_pixels, num_clusters, voxel_selection, max_patches, train_input_dir, pred_input_dir,  model_dir=None):
         self.model_name = model_name
         self.patch_size = patch_size
         self.patch_overlap = patch_overlap
@@ -16,38 +17,58 @@ class FeatureExtraction:
         self.num_clusters = num_clusters
         self.voxel_selection = voxel_selection
         self.max_patches = max_patches
+        self.train_input_dir = train_input_dir
+        self.pred_input_dir = pred_input_dir
 
-        self.img_dir = img_dir
-        self.seg_dir = seg_dir
-        self.clus_dir = clus_dir
-        self.out_dir = out_dir
         self.model_dir = model_dir
         
-        self.features = []
-        self.img_patch_list = []
-        self.clus_patch_list = []
-
-        self.img_filenames = util.get_nifti_filenames(self.img_dir)
-        self.clus_filenames = util.get_nifti_filenames(self.clus_dir)
-        self.seg_filenames = util.get_nifti_filenames(self.seg_dir)
-
         # Load encoder 
-        self.autoencoder = util.load_json_model(self.model_name, self.model_dir)
+        self.autoencoder = util.load_cae_model(self.model_name, self.model_dir)
         self.encoder = Model(self.autoencoder.input, self.autoencoder.layers[-5].output)
         self.encoder.summary() 
 
-        # Create out directory if it doesn't exists 
-        if not os.path.exists(self.out_dir):
-            os.makedirs(self.out_dir)
+        # Create out dirs if it doesn't exists 
+        if not os.path.exists('evaluation/classification/features/training/'):
+            os.makedirs('evaluation/classification/features/training/')
 
+        if not os.path.exists('evaluation/classification/features/prediction/'):
+            os.makedirs('evaluation/classification/features/prediction/')
+
+
+        # Create out directories
+        self.train_out_dir = util.get_next_folder_name('evaluation/classification/features/training/', pattern='ex')
+        self.pred_out_dir = util.get_next_folder_name('evaluation/classification/features/prediction/', pattern='ex')
+        if self.train_out_dir.split('/')[-1] != self.pred_out_dir.split('/')[-1]:
+            print('\nOut directories for features are not the same, which might cause confusion')
+            print(f'train_out_dir: {self.train_out_dir}')
+            print(f'pred_out_dir: {self.pred_out_dir}')
+        
+        os.makedirs(self.train_out_dir)
+        os.makedirs(self.pred_out_dir)
 
     
-    def run(self, batch_size):
-        for i in range(len(self.img_filenames)):
+    def run(self, batch_size, type='training'):
+        # Get filenames 
+        if type == 'training':
+            img_filenames = util.get_paths_from_tree(self.train_input_dir, 'imaging')
+            seg_filenames = util.get_paths_from_tree(self.train_input_dir, 'segmentation')
+            clus_filenames = util.get_paths_from_tree(self.train_input_dir, 'cluster')
+            print('\n\nRunning feature extraction on training data... \n\n')  
+        elif type == 'prediction':
+            img_filenames = util.get_paths_from_tree(self.pred_input_dir, 'imaging')
+            seg_filenames = util.get_paths_from_tree(self.pred_input_dir, 'segmentation')
+            clus_filenames = util.get_paths_from_tree(self.pred_input_dir, 'cluster')
+            print('\n\nRunning feature extraction on prediction data... \n\n') 
+
+        else:
+            raise Exception('\nException: Clustering type must either be "training" or "prediction"\n')
+        
+        features = []
+        for i in tqdm(range(len(img_filenames))):
             # Append filename to new list to match input of create 2_patches 
-            img = [self.img_filenames[i]]
-            seg = [self.seg_filenames[i]]
-            clus = [self.clus_filenames[i]]
+            img = [img_filenames[i]]
+            seg = [seg_filenames[i]]
+            clus = [clus_filenames[i]]
 
             if self.patch_size[0] == 1:
                 # Extract 2d patches from img
@@ -58,8 +79,12 @@ class FeatureExtraction:
                                                                                             min_labeled_pixels=self.min_labeled_pixels  )
 
                 # Save sample lists to disk 
-                util.save_sample_list(img_patch_list, name=f'img_patches_{i}', out_dir=self.out_dir)
-                util.save_sample_list(clus_patch_list, name=f'clus_patches_{i}', out_dir=self.out_dir)
+                if  (type == 'training'):
+                    util.save_sample_list(img_patch_list, name=f'img_patches_{i}', out_dir=self.train_out_dir)
+                    util.save_sample_list(clus_patch_list, name=f'clus_patches_{i}', out_dir=self.train_out_dir)
+                else:
+                    util.save_sample_list(img_patch_list, name=f'img_patches_{i}', out_dir=self.pred_out_dir)
+                    util.save_sample_list(clus_patch_list, name=f'clus_patches_{i}', out_dir=self.pred_out_dir)
                 
                 # Load patches from disk
                 img_patches = util.load_patches(img_patch_list)
@@ -133,20 +158,30 @@ class FeatureExtraction:
                 else:
                     max_stds.append(0)
             
-            self.features.append(max_stds)
+            features.append(max_stds)
                 
                 
 
-            
-            
-        # Save results
-        util.save_fe_results(   features=self.features,
-                                patch_size=self.patch_size,
-                                patch_overlap=self.patch_overlap,
-                                min_labeled_pixels=self.min_labeled_pixels,
-                                num_clusters=self.num_clusters,
-                                voxel_selection=self.voxel_selection,
-                                out_dir=self.out_dir                            )
+        # Save extracted features    
+        if type == 'training':   
+            util.save_fe_results(   features=features,
+                                    patch_size=self.patch_size,
+                                    patch_overlap=self.patch_overlap,
+                                    min_labeled_pixels=self.min_labeled_pixels,
+                                    num_clusters=self.num_clusters,
+                                    voxel_selection=self.voxel_selection,
+                                    input_dir=self.train_input_dir,
+                                    out_dir=self.train_out_dir    )
+        
+        else: 
+            util.save_fe_results(   features=features,
+                                    patch_size=self.patch_size,
+                                    patch_overlap=self.patch_overlap,
+                                    min_labeled_pixels=self.min_labeled_pixels,
+                                    num_clusters=self.num_clusters,
+                                    voxel_selection=self.voxel_selection,
+                                    input_dir=self.pred_input_dir,
+                                    out_dir=self.pred_out_dir    )
         
         
             
