@@ -17,32 +17,21 @@ import numpy as np
 from tqdm import tqdm
 
 class AutomaticSegmentation:
-    def __init__(self, model_name, patch_size, input_train_dir, input_pred_dir, model_dir):
+    def __init__(self, model_name, patch_size, input_dir, model_dir):
         self.model_name = model_name
         self.patch_size = patch_size
         self.predictions = []
         self.model_dir = model_dir
-        self.input_train_dir = input_train_dir
-        self.input_pred_dir = input_pred_dir
-        
-        self.img_dir = ''
+        self.input_dir = input_dir
 
     
-    def run(self, type):
-        # Get filenames 
-        if type == 'training':
-            self.img_dir = self.input_train_dir
-        elif type == 'prediction':
-            self.img_dir = self.input_pred_dir        
-        else:
-            raise Exception('\nException: Clustering type must either be "training" or "prediction"\n') 
-
-        
+    def run(self):
+       
         # Initialize Data IO Interface for NIfTI data
         interface = NIFTI_interface(channels=1, classes=2)
 
         # Create Data IO object to load and write samples in the file structure
-        data_io = Data_IO(interface, input_path=self.img_dir, delete_batchDir=False)
+        data_io = Data_IO(interface, input_path=self.input_dir, delete_batchDir=False)
 
 
         # Access all available samples in our file structure
@@ -85,13 +74,10 @@ class AutomaticSegmentation:
         model.load(f'{self.model_dir}{self.model_name}.hdf5')
 
         # Obtain training and validation data set ----- CHANGE BASED ON PRED/TRAIN
-        images ,_ = load_disk2fold(f'{self.model_dir}sample_list.json')
+        images ,_ = load_disk2fold(f'{self.input_dir}sample_list.json')
 
-        if type == 'training':
-            print('\n\nRunning automatic segmentation on training data...\n')
-        else:
-            print('\n\nRunning automatic segmentation on prediction data...\n')  
-
+ 
+        print('\n\nRunning automatic segmentation on samples...\n')
         print(f'Segmenting images: {images}')
 
         # Compute predictions
@@ -105,10 +91,10 @@ class AutomaticSegmentation:
         print('Clipping images... ')
     
         filepaths = util.get_nifti_filepaths('predictions/')
-        filenames = util.get_sub_dirs(self.img_dir)
+        filenames = util.get_sub_dirs(self.input_dir)
 
         for i in tqdm(range(len(filepaths))): 
-            self.remove_small_objects(filepaths[i], filenames[i], self.img_dir)
+            self.remove_small_objects(filepaths[i], filenames[i], self.input_dir)
         
         # Delete folder created by miscnn
         shutil.rmtree('predictions/')

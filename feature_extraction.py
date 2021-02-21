@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 
 class FeatureExtraction:
-    def __init__(self, model_name, patch_size, patch_overlap, min_labeled_pixels, num_clusters, voxel_selection, max_patches, train_input_dir, pred_input_dir,  model_dir=None):
+    def __init__(self, model_name, patch_size, patch_overlap, min_labeled_pixels, num_clusters, voxel_selection, max_patches, input_dir,  model_dir=None):
         self.model_name = model_name
         self.patch_size = patch_size
         self.patch_overlap = patch_overlap
@@ -17,9 +17,7 @@ class FeatureExtraction:
         self.num_clusters = num_clusters
         self.voxel_selection = voxel_selection
         self.max_patches = max_patches
-        self.train_input_dir = train_input_dir
-        self.pred_input_dir = pred_input_dir
-
+        self.input_dir = input_dir
         self.model_dir = model_dir
         
         # Load encoder 
@@ -28,41 +26,22 @@ class FeatureExtraction:
         self.encoder.summary() 
 
         # Create out dirs if it doesn't exists 
-        if not os.path.exists('evaluation/classification/features/training/'):
-            os.makedirs('evaluation/classification/features/training/')
+        if not os.path.exists('evaluation/classification/features/'):
+            os.makedirs('evaluation/classification/features/')
 
-        if not os.path.exists('evaluation/classification/features/prediction/'):
-            os.makedirs('evaluation/classification/features/prediction/')
+        self.out_dir = util.get_next_folder_name('evaluation/classification/features/', pattern='ex')
+        os.makedirs(self.out_dir)
 
-
-        # Create out directories
-        self.train_out_dir = util.get_next_folder_name('evaluation/classification/features/training/', pattern='ex')
-        self.pred_out_dir = util.get_next_folder_name('evaluation/classification/features/prediction/', pattern='ex')
-        if self.train_out_dir.split('/')[-1] != self.pred_out_dir.split('/')[-1]:
-            print('\nOut directories for features are not the same, which might cause confusion')
-            print(f'train_out_dir: {self.train_out_dir}')
-            print(f'pred_out_dir: {self.pred_out_dir}')
-        
-        os.makedirs(self.train_out_dir)
-        os.makedirs(self.pred_out_dir)
 
     
-    def run(self, batch_size, type='training'):
+    def run(self, batch_size):
         # Get filenames 
-        if type == 'training':
-            img_filenames = util.get_paths_from_tree(self.train_input_dir, 'imaging')
-            seg_filenames = util.get_paths_from_tree(self.train_input_dir, 'segmentation')
-            clus_filenames = util.get_paths_from_tree(self.train_input_dir, 'cluster')
-            print('\n\nRunning feature extraction on training data... \n\n')  
-        elif type == 'prediction':
-            img_filenames = util.get_paths_from_tree(self.pred_input_dir, 'imaging')
-            seg_filenames = util.get_paths_from_tree(self.pred_input_dir, 'segmentation')
-            clus_filenames = util.get_paths_from_tree(self.pred_input_dir, 'cluster')
-            print('\n\nRunning feature extraction on prediction data... \n\n') 
-
-        else:
-            raise Exception('\nException: Clustering type must either be "training" or "prediction"\n')
+        img_filenames = util.get_paths_from_tree(self.input_dir, 'imaging')
+        seg_filenames = util.get_paths_from_tree(self.input_dir, 'segmentation')
+        clus_filenames = util.get_paths_from_tree(self.input_dir, 'cluster')
         
+        print('\n\nRunning feature extraction on samples.. \n\n')  
+       
         features = []
         for i in tqdm(range(len(img_filenames))):
             # Append filename to new list to match input of create 2_patches 
@@ -79,13 +58,9 @@ class FeatureExtraction:
                                                                                             min_labeled_pixels=self.min_labeled_pixels  )
 
                 # Save sample lists to disk 
-                if  (type == 'training'):
-                    util.save_sample_list(img_patch_list, name=f'img_patches_{i}', out_dir=self.train_out_dir)
-                    util.save_sample_list(clus_patch_list, name=f'clus_patches_{i}', out_dir=self.train_out_dir)
-                else:
-                    util.save_sample_list(img_patch_list, name=f'img_patches_{i}', out_dir=self.pred_out_dir)
-                    util.save_sample_list(clus_patch_list, name=f'clus_patches_{i}', out_dir=self.pred_out_dir)
-                
+                util.save_sample_list(img_patch_list, name=f'img_patches_{i}', out_dir=self.out_dir)
+                util.save_sample_list(clus_patch_list, name=f'clus_patches_{i}', out_dir=self.out_dir)
+
                 # Load patches from disk
                 img_patches = util.load_patches(img_patch_list)
                 clus_patches = util.load_patches(clus_patch_list)
@@ -109,10 +84,8 @@ class FeatureExtraction:
                 img_patches = np.asarray(img_patches)
                 clus_patches = np.asarray(clus_patches)
 
-
                 # Normalize data 
                 img_patches = util.normalize_data(img_patches)
-
 
             # Make predictions 
             pred = self.encoder.predict(img_patches, verbose=1, batch_size=batch_size)
@@ -133,16 +106,18 @@ class FeatureExtraction:
            
             feature = [[] for i in range(self.num_clusters)]
             for i in range(len(img_patches)):
-                if self.voxel_selection == 'center':
-                    # Find matching cluster based on center voxel 
+                
+                # Find matching cluster based on center voxel
+                if self.voxel_selection == 'center': 
                     cluster = int(clus_patches[i, x_center, y_center, z_center])
                 
                     # Add the extracted feature to the feature list
                     if cluster != 0:
                         std = np.std(pred[i]) 
                         feature[cluster-1].append(std)
+                
+                # Find the matching cluster based on highest share 
                 elif self.voxel_selection == 'highest_share':
-                    # Find the matching cluster pased on highest share 
                     patch = clus_patches[i].astype(int)
                     cluster = np.argmax(np.bincount(patch.flat))
                     if cluster != 0:
@@ -160,28 +135,12 @@ class FeatureExtraction:
             
             features.append(max_stds)
                 
-                
-
         # Save extracted features    
-        if type == 'training':   
-            util.save_fe_results(   features=features,
-                                    patch_size=self.patch_size,
-                                    patch_overlap=self.patch_overlap,
-                                    min_labeled_pixels=self.min_labeled_pixels,
-                                    num_clusters=self.num_clusters,
-                                    voxel_selection=self.voxel_selection,
-                                    input_dir=self.train_input_dir,
-                                    out_dir=self.train_out_dir    )
-        
-        else: 
-            util.save_fe_results(   features=features,
-                                    patch_size=self.patch_size,
-                                    patch_overlap=self.patch_overlap,
-                                    min_labeled_pixels=self.min_labeled_pixels,
-                                    num_clusters=self.num_clusters,
-                                    voxel_selection=self.voxel_selection,
-                                    input_dir=self.pred_input_dir,
-                                    out_dir=self.pred_out_dir    )
-        
-        
-            
+        util.save_fe_results(   features=features,
+                                patch_size=self.patch_size,
+                                patch_overlap=self.patch_overlap,
+                                min_labeled_pixels=self.min_labeled_pixels,
+                                num_clusters=self.num_clusters,
+                                voxel_selection=self.voxel_selection,
+                                input_dir=self.input_dir,
+                                out_dir=self.out_dir    )   

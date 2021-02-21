@@ -185,7 +185,7 @@ def load_features(feature_dir):
     return features
 
 def ffr_values_to_target_list(target_dir, ffr_boundary=0.85):
-    with open(f'{target_dir}target.txt') as f:
+    with open(f'{target_dir}ffr_values.txt') as f:
         values = f.readlines()
     
     #values = [x.strip() for x in values]
@@ -201,7 +201,7 @@ def ffr_values_to_target_list(target_dir, ffr_boundary=0.85):
 
 
 def delete_tmp_files():
-    shutil.rmtree('tmp')
-
+    if os.path.exists('tmp'):
+        shutil.rmtree('tmp')
 
 

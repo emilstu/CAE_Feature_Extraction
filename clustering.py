@@ -12,7 +12,7 @@ from tqdm import tqdm
 from utils.kmeans import get_closest_centroid, compute_sse, get_coordinates_from_segmentation, invf
 
 class Clustering:
-    def __init__(self, num_iters, num_clusters, train_input_dir, pred_input_dir):
+    def __init__(self, num_iters, num_clusters, input_dir):
         """
         num_iters (int): Number of iterations of kmeans
         num_clusters (int): Number of clusters
@@ -23,20 +23,13 @@ class Clustering:
 
         self.num_iters = num_iters
         self.num_clusters = num_clusters
-        self.train_input_dir = train_input_dir
-        self.pred_input_dir = pred_input_dir
+        self.input_dir = input_dir
         
 
-    def run(self, type):
+    def run(self):
         # Get filenames 
-        if type == 'training':
-            filenames = util.get_paths_from_tree(self.train_input_dir, 'segmentation')
-            print('\n\nRunning clustering on training data...\n\n')  
-        elif type == 'prediction':
-            filenames = util.get_paths_from_tree(self.train_input_dir, 'segmentation')
-            print('\n\nRunning clustering on prediction data...\n\n')  
-        else:
-            raise Exception('\nException: Clustering type must either be "training" or "prediction"\n') 
+        filenames = util.get_paths_from_tree(self.input_dir, 'segmentation')
+        print('\n\nRunning clustering on samples...\n\n')  
 
         # Loop over images
         for i, filename in enumerate(tqdm(filenames)):
@@ -99,14 +92,14 @@ class Clustering:
                 # Compute SSE
                 sse = compute_sse(data.squeeze(), centroids.squeeze(), assigned_centroids)
                 sse_list.append(sse)
-            print('Finished clustering image.')
+            print('\tFinished clustering image.')
 
             # End time
             toc = time.time()
 
             # Print output
             print("Total clustering-time: " + str(round(toc - tic, self.num_clusters)))
-            print("Clustering-time per iteration: \n" + str(round(toc - tic, self.num_clusters)/self.num_iters))
+            print("Clustering-time per iteration: " + str(round(toc - tic, self.num_clusters)/self.num_iters))
         
     
             # Save clustering to nifti label-map
@@ -125,12 +118,12 @@ class Clustering:
                 
                 label+=1
 
-            folder_name = util.get_sub_dirs(self.train_input_dir)[i]
-            self.save_clustered_image(img, label_map, hd, folder_name, type)
+            folder_name = util.get_sub_dirs(self.input_dir)[i]
+            self.save_clustered_image(img, label_map, hd, folder_name)
             print('File saved.')
 
 
-    def save_clustered_image(self, img, label_map, hd, folder_name, type):    
+    def save_clustered_image(self, img, label_map, hd, folder_name):    
         # update data type:
         new_dtype = np.float32 
         label_map = label_map.astype(new_dtype)
@@ -145,13 +138,5 @@ class Clustering:
         else:
             raise IOError('Input image header problem')
 
-        
-        if type == 'training':
-            outpath = f'{self.train_input_dir}{folder_name}/cluster.nii.gz' 
-        else:
-            outpath = f'{self.pred_input_dir}{folder_name}/cluster.nii.gz' 
-            
+        outpath = f'{self.input_dir}{folder_name}/cluster.nii.gz' 
         nib.save(label_map, outpath)
-    
-
-    

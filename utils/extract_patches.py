@@ -117,7 +117,7 @@ def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
                 patch_img_filenames.append(out_dir_img + f'img_patch_{num_of_patches}.nii.gz')
 
                 num_of_patches += 1
-    print(f'Finished extracting patches from: {img_filenames}')
+    print(f'\tFinished extracting patches from.')
 
     patch_img_filenames = np.array(patch_img_filenames)
     patch_seg_filenames = np.array(patch_seg_filenames)
@@ -274,7 +274,7 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
         img_all_patches = append_patches_to_list(img_patches, img_all_patches)
         if clus_filenames is not None:
             clus_all_patches = append_patches_to_list(clus_patches, clus_all_patches)
-    print(f'Finished extracting patches from: {img_filenames}')
+    print(f'\tFinished extracting patches from.')
     return img_all_patches, clus_all_patches
 
 

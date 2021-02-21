@@ -6,6 +6,15 @@ from svm_classifier import SvmClassifier
 from CAE.cae import CAE
 from utils import util
 
+#-----------------------------------------------------#
+#               Program Parameters                    #
+#-----------------------------------------------------#
+autoencoder = False
+automatic_segmentation = False
+cluster = False
+extract_features = False
+classify = True
+delete_tmp = True
 
 #-----------------------------------------------------#
 #             2D/3D Convolutional Autoencoder         #
@@ -22,92 +31,67 @@ max_patches = 20
 batch_size = 500
 epochs = 1
 batches_per_epoch = 1
-test_size = 0.5
+cae_test_size = 0.5
 
 #-----------------------------------------------------#
-#               Automatic Segmentation                #
+#               Patient Classification                #
 #-----------------------------------------------------#
+pc_input_dir = 'data/classification/patients/'
+pc_test_size = 0.2
+
+# Automatic Segmentstion
 as_model_name = 'model.best'
 as_model_dir = 'data/classification/as_model/'
-as_train_input_dir = 'data/classification/training/'
-as_pred_input_dir = 'data/classification/prediction/'
 as_patch_size = (160, 160, 80) 
 
-#-----------------------------------------------------#
-#                   Clustering                        #
-#-----------------------------------------------------#
-clus_train_input_dir = 'data/classification/training/'
-clus_pred_input_dir = 'data/classification/prediction/'
-
+# Clustering
 num_iters = 5
 num_clusters = 4
 
-#-----------------------------------------------------#
-#               Feature Extraction                    #
-#-----------------------------------------------------#
-fe_train_input_dir = 'data/classification/training/'
-fe_pred_input_dir  = 'data/classification/prediction/'
+# Feature Extraction
 fe_model_dir = 'evaluation/CAE/2D/ex2/'
-
 fe_model_name = 'model_2D'
 voxel_selection = 'center' #'highest_share'
 
-#-----------------------------------------------------#
-#               SVM Classification                    #
-#-----------------------------------------------------#
-svm_train_feature_dir = 'evaluation/classification/features/training/ex1/'
-svm_train_target_dir = 'data/classification/training/'
-svm_pred_feature_dir = 'evaluation/classification/features/prediction/ex1/'
-svm_pred_target_dir = 'data/classification/prediction/'
+# SVM Classification
+svm_feature_dir = 'evaluation/classification/features/ex1/'
+svm_target_dir = 'data/classification/ffr_data/'
 ffr_boundary = 0.85
 
 #-----------------------------------------------------#
-#               Program Parameters                    #
+#             2D/3D Convolutional Autoencoder         #
 #-----------------------------------------------------#
-autoencoder = False
-automatic_segmentation = False
-cluster = False
-extract_features = False
-classify = True
-delete_tmp = True
-
-
 if autoencoder:
     cae = CAE(  patch_size=cae_patch_size, 
                 patch_overlap=patch_overlap,
                 min_labeled_pixels=min_labeled_pixels,
-                test_size=test_size,
+                test_size=cae_test_size,
                 input_dir=cae_input_dir,
                 model_dir=cae_model_dir )
 
     cae.train(batch_size, epochs, batches_per_epoch)
     cae.predict(batch_size, delete_patches=True)
-    
 
+#-----------------------------------------------------#
+#               Patient classification                #
+#-----------------------------------------------------#
 if automatic_segmentation:
     asg = AutomaticSegmentation(    model_name=as_model_name,
                                     patch_size=as_patch_size,
-                                    input_train_dir=as_train_input_dir,
-                                    input_pred_dir=as_pred_input_dir, 
+                                    input_dir=pc_input_dir, 
                                     model_dir=as_model_dir   )
     
-    asg.run(type='training')
+    asg.run()
     asg.run_postprocessing()
 
-    asg.run(type='prediction')
-    asg.run_postprocessing()
 
 
 if cluster:
     clustering = Clustering(    num_iters=num_iters,
                                 num_clusters=num_clusters,
-                                train_input_dir=clus_train_input_dir,
-                                pred_input_dir=clus_pred_input_dir  )
-
-    clustering.run(type='training')     
-    clustering.run(type='prediction') 
-
-
+                                input_dir=pc_input_dir  )
+    
+    clustering.run() 
 
 
 if extract_features:
@@ -119,20 +103,16 @@ if extract_features:
                             voxel_selection=voxel_selection,
                             max_patches=max_patches,
                             model_dir=fe_model_dir,
-                            train_input_dir=fe_train_input_dir,
-                            pred_input_dir=fe_train_input_dir )
+                            input_dir=pc_input_dir  )
     
-    fe.run(batch_size=batch_size, type='training')
-    fe.run(batch_size=batch_size, type='prediction')
-
+    fe.run(batch_size=batch_size)
 
 
 if classify:
-    svm = SvmClassifier(    train_feature_dir=svm_train_feature_dir,
-                            train_target_dir=svm_train_target_dir,
-                            pred_feature_dir=svm_pred_feature_dir,
-                            pred_target_dir=svm_pred_target_dir,
-                            ffr_boundary=ffr_boundary   )
+    svm = SvmClassifier(    feature_dir=svm_feature_dir,
+                            target_dir=svm_target_dir,
+                            ffr_boundary=ffr_boundary,   
+                            test_size=pc_test_size  )
                             
     svm.train()
     svm.predict()
