@@ -1,20 +1,17 @@
 import numpy as np
 import glob
 import nibabel as nib
-import torch
-import torchio as tio
-import random
 from keras.models import model_from_json 
 import pickle
 import os
-import csv
 from sklearn.utils import check_array, check_random_state
-import numbers
 from numpy.lib.stride_tricks import as_strided
 import shutil
 from csv import reader
-import copy
-from skimage import morphology
+from collections import Counter
+from collections import defaultdict
+import json
+
 
 def get_nifti_filepaths(dir):
     filepaths=glob.glob(dir + '*.nii.gz')
@@ -184,20 +181,38 @@ def load_features(feature_dir):
     features = np.asarray(features, dtype=np.float64)
     return features
 
-def ffr_values_to_target_list(target_dir, ffr_boundary=0.85):
-    with open(f'{target_dir}ffr_values.txt') as f:
-        values = f.readlines()
-    
-    #values = [x.strip() for x in values]
-    target = []
-    
-    for value in values:
-        if float(value) >= ffr_boundary:
-            target.append(1)
-        else:
-            target.append(0)
+def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_boundary=0.85):
+    with open(f'{ffr_dir}{ffr_filename}') as f:
+        lines = f.readlines()
 
-    return np.array(target)
+    # Get all patients to classify
+    classification_patients = get_sub_dirs(pc_input_dir)
+    classification_patients = [x.split('_')[-1] for x in classification_patients]
+    
+    patient_values = defaultdict(list)
+    for line in lines:
+        split = line.split(' ')
+        patient = split[0]
+
+        # Add ffr value to dict if the patient is in the classification folder
+        if patient in classification_patients:
+            ffr = float(split[-1])
+            patient_values[patient].append(ffr)
+    
+    target = []
+    num = 0
+    for values in patient_values.values():
+        min_ffr = min(values)
+        if min_ffr > ffr_boundary:
+            target.append(0)
+            num += 1
+        else:
+            target.append(1)
+
+    print('\nPatients with signficant stenosis: ', len(target)-num)
+    print('Patients without signficant stenosis: ', num)
+
+    return target
 
 
 def delete_tmp_files():
@@ -205,3 +220,32 @@ def delete_tmp_files():
         shutil.rmtree('tmp')
 
 
+def organize_data(data_dir):
+    # Get all filenames
+    filenames = get_nifti_filenames(data_dir, format=True)
+    folders = []
+    
+    for filename in filenames:
+        pattern = filename.split('Segmentation')[0]
+        folders.append(pattern)
+    count_dict = Counter(folders)
+    
+    for key in count_dict.keys():
+        os.makedirs(f'{data_dir}{key[:-1]}/')
+        names = list(filter(lambda x: x.startswith(key), filenames))
+        for name in names:
+            if name.endswith('LV.nii.gz'):
+                shutil.move(f'{data_dir}{name}', f'{data_dir}{key[:-1]}/segmentation.nii.gz')
+            elif name.endswith('CCTA.nii.gz'):
+                shutil.move(f'{data_dir}{name}', f'{data_dir}{key[:-1]}/imaging.nii.gz' )
+
+
+def create_sample_list(input_dir):
+    # Get all patients to classify
+    classification_patients = get_sub_dirs(input_dir)
+    sample_list = {'TRAINING': classification_patients, 'VALIDATION': []}
+    print(sample_list)
+    # Save to json file
+    with open(f'{input_dir}sample_list.json', 'w') as fp:
+        json.dump(sample_list, fp)
+        

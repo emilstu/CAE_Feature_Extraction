@@ -9,10 +9,10 @@ from utils import util
 #-----------------------------------------------------#
 #               Program Parameters                    #
 #-----------------------------------------------------#
-autoencoder = False
-automatic_segmentation = False
-cluster = False
-extract_features = False
+autoencoder = True
+automatic_segmentation = True
+cluster = True
+extract_features = True
 classify = True
 delete_tmp = True
 
@@ -54,8 +54,9 @@ fe_model_name = 'model_2D'
 voxel_selection = 'center' #'highest_share'
 
 # SVM Classification
-svm_feature_dir = 'evaluation/classification/features/ex1/'
-svm_target_dir = 'data/classification/ffr_data/'
+feature_dir = 'evaluation/classification/features/ex1/'
+ffr_dir = 'data/classification/ffr_data/'
+ffr_filename = '20181206_ffr_vals'
 ffr_boundary = 0.85
 
 #-----------------------------------------------------#
@@ -72,6 +73,7 @@ if autoencoder:
     cae.train(batch_size, epochs, batches_per_epoch)
     cae.predict(batch_size, delete_patches=True)
 
+
 #-----------------------------------------------------#
 #               Patient classification                #
 #-----------------------------------------------------#
@@ -83,7 +85,6 @@ if automatic_segmentation:
     
     asg.run()
     asg.run_postprocessing()
-
 
 
 if cluster:
@@ -109,14 +110,15 @@ if extract_features:
 
 
 if classify:
-    svm = SvmClassifier(    feature_dir=svm_feature_dir,
-                            target_dir=svm_target_dir,
+    svm = SvmClassifier(    feature_dir=feature_dir,
+                            ffr_dir=ffr_dir,
+                            ffr_filename=ffr_filename,
+                            input_dir=pc_input_dir,
                             ffr_boundary=ffr_boundary,   
                             test_size=pc_test_size  )
                             
     svm.train()
     svm.predict()
-
 
 if delete_tmp:
     util.delete_tmp_files()
