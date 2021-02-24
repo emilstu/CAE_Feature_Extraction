@@ -4,8 +4,8 @@ import os
 from keras.models import model_from_json
 import numpy as np
 from collections import Counter
-import statistics
 from tqdm import tqdm
+import time
 
 
 class FeatureExtraction:
@@ -103,37 +103,37 @@ class FeatureExtraction:
                 x_center = int(self.patch_size[1]/2 - 1)
                 y_center = int(self.patch_size[2]/2 - 1)
 
-           
-            feature = [[] for i in range(self.num_clusters)]
+            # Start feature extraction time
+            tic = time.time()
+            feature = dict().fromkeys(range(1,self.num_clusters+1), 0)
+            print(feature)
+            print('\nStart extracting features from image...')
             for i in range(len(img_patches)):
-                
                 # Find matching cluster based on center voxel
                 if self.voxel_selection == 'center': 
                     cluster = int(clus_patches[i, x_center, y_center, z_center])
-                
-                    # Add the extracted feature to the feature list
-                    if cluster != 0:
-                        std = np.std(pred[i]) 
-                        feature[cluster-1].append(std)
                 
                 # Find the matching cluster based on highest share 
                 elif self.voxel_selection == 'highest_share':
                     patch = clus_patches[i].astype(int)
                     cluster = np.argmax(np.bincount(patch.flat))
-                    if cluster != 0:
-                        std = np.std(pred[i])
-                        feature[cluster-1].append(std)
                 
-            # Find maximum value for each cluster 
-            max_stds = []
-            for i in range (len(feature)):
-                val = feature[i]
-                if val:
-                    max_stds.append(max(val))
-                else:
-                    max_stds.append(0)
+                # Calculate and add max stds for each cluster
+                if cluster != 0:
+                    std = np.std(pred[i])
+                    max_std = feature.get(cluster)
+                    if std > max_std:
+                        feature[cluster] = std
             
-            features.append(max_stds)
+            # End clustering time
+            toc = time.time()
+
+            # Print output
+            print("Image feature-extraction-time: " + str(round(toc - tic, 2)))
+
+            # Add the max stds for the image 
+            features.append(list(feature.values()))
+            util.delete_tmp_files()
                 
         # Save extracted features    
         util.save_fe_results(   features=features,

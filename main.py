@@ -9,7 +9,7 @@ from utils import util
 #-----------------------------------------------------#
 #               Program Parameters                    #
 #-----------------------------------------------------#
-autoencoder = True
+autoencoder = False
 automatic_segmentation = True
 cluster = True
 extract_features = True
@@ -24,8 +24,8 @@ cae_model_dir = ''
 
 #cae_patch_size = (200, 200, 200)
 cae_patch_size = (1, 48, 48) 
-patch_overlap=(0, 0, 0)
-min_labeled_pixels=0.7
+patch_overlap=(0, 40, 40)
+min_labeled_pixels=0.5
 max_patches = 20
 
 batch_size = 500
@@ -37,7 +37,7 @@ cae_test_size = 0.5
 #               Patient Classification                #
 #-----------------------------------------------------#
 pc_input_dir = 'data/classification/patients/'
-pc_test_size = 0.2
+pc_test_size = 0.5
 
 # Automatic Segmentstion
 as_model_name = 'model.best'
@@ -45,8 +45,8 @@ as_model_dir = 'data/classification/as_model/'
 as_patch_size = (160, 160, 80) 
 
 # Clustering
-num_iters = 5
-num_clusters = 4
+num_iters = 100
+num_clusters = 500
 
 # Feature Extraction
 fe_model_dir = 'evaluation/CAE/2D/ex2/'
@@ -58,6 +58,8 @@ feature_dir = 'evaluation/classification/features/ex1/'
 ffr_dir = 'data/classification/ffr_data/'
 ffr_filename = '20181206_ffr_vals'
 ffr_boundary = 0.85
+
+util.create_sample_list(pc_input_dir)
 
 #-----------------------------------------------------#
 #             2D/3D Convolutional Autoencoder         #

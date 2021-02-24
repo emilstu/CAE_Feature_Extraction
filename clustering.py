@@ -10,6 +10,7 @@ import nibabel as nib
 import os
 from tqdm import tqdm
 from utils.kmeans import get_closest_centroid, compute_sse, get_coordinates_from_segmentation, invf
+from collections import defaultdict
 
 class Clustering:
     def __init__(self, num_iters, num_clusters, input_dir):
@@ -69,7 +70,7 @@ class Clustering:
             # List to store SSE for each iteration 
             sse_list = []
 
-            # Start time
+            # Start clustering time
             tic = time.time()
 
             # Main Loop
@@ -94,17 +95,43 @@ class Clustering:
                 sse_list.append(sse)
             print('\tFinished clustering image.')
 
-            # End time
+            # End clustering time
             toc = time.time()
 
             # Print output
-            print("Total clustering-time: " + str(round(toc - tic, self.num_clusters)))
-            print("Clustering-time per iteration: " + str(round(toc - tic, self.num_clusters)/self.num_iters))
-        
-    
+            print("Image clustering-time: " + str(round(toc - tic, 2)))
+            print("Image clustering-time per iteration: " + str(round(toc - tic, 2)/self.num_iters))
+            
+            
+            print('\nSaving clustered image to nifti label-map... ')
+            # Start saving time
+            tic = time.time()
+
             # Save clustering to nifti label-map
             label_map = np.zeros_like(img_data)
+            
+            # Join centeroids and coordinates to dict 
+            merged = defaultdict(list)
+            for a, b in zip(assigned_centroids, data):
+                merged[a].append(b)
 
+            for key, cords in merged.items():
+                cluster = key + 1
+                for cord in cords:
+                    ijk = invf(cord[0], cord[1], cord[2], iM, abc)
+                    label_map[int(ijk[0]),int(ijk[1]),int(ijk[2])] = cluster
+            
+            # End clustering time
+            toc = time.time()
+
+            # Print output
+            print("Time spent saving image to labelmap: " + str(round(toc - tic, 2)))
+            
+            """
+            # Start saving time
+            tic = time.time()
+
+            # Make dict for cent
             label = 1
 
             print('\nSaving clustered image to nifti label-map... \n')
@@ -117,9 +144,17 @@ class Clustering:
                     label_map[int(ijk[0]),int(ijk[1]),int(ijk[2])] = label
                 
                 label+=1
+            
+            # End clustering time
+            toc = time.time()
+
+            # Print output
+            print("Time spent saving image to labelmap: " + str(round(toc - tic, 2)))
+            """
 
             folder_name = util.get_sub_dirs(self.input_dir)[i]
             self.save_clustered_image(img, label_map, hd, folder_name)
+            
             print('File saved.')
 
 

@@ -8,9 +8,9 @@ from utils import util
 import random
 
 class SvmClassifier:
-    def __init__(self, feature_dir, target_dir, ffr_filename, input_dir, ffr_boundary, test_size):
+    def __init__(self, feature_dir, ffr_dir, ffr_filename, input_dir, ffr_boundary, test_size):
         self.feature_dir = feature_dir
-        self.ffr_dir = target_dir
+        self.ffr_dir = ffr_dir
         self.ffr_filename = ffr_filename
         self.input_dir = input_dir
         self.ffr_boundary = ffr_boundary
@@ -29,7 +29,7 @@ class SvmClassifier:
     def train(self):
         print('\n\nStart training of SVM classifier... \n')
         features = util.load_features(self.feature_dir)    
-        target = util.ffr_values_to_target_list(self.ffr_dir, self.input_dir, self.ffr_boundary)
+        target = util.ffr_values_to_target_list(self.ffr_dir, self.ffr_filename, self.input_dir, self.ffr_boundary)
    
         # Split data for training and testing 
         feature_train, feature_test, target_train, target_test = train_test_split(features, target, test_size=self.test_size,random_state=109) 

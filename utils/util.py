@@ -182,15 +182,18 @@ def load_features(feature_dir):
     return features
 
 def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_boundary=0.85):
-    with open(f'{ffr_dir}{ffr_filename}') as f:
-        lines = f.readlines()
-
     # Get all patients to classify
     classification_patients = get_sub_dirs(pc_input_dir)
     classification_patients = [x.split('_')[-1] for x in classification_patients]
-    
+
     patient_values = defaultdict(list)
+    
+    # Read ffr lines from file
+    with open(f'{ffr_dir}{ffr_filename}') as f:
+        lines = f.readlines()
+
     for line in lines:
+        line.rstrip('\n')
         split = line.split(' ')
         patient = split[0]
 
@@ -198,7 +201,8 @@ def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_boundary=
         if patient in classification_patients:
             ffr = float(split[-1])
             patient_values[patient].append(ffr)
-    
+        
+    print(patient_values)
     target = []
     num = 0
     for values in patient_values.values():
