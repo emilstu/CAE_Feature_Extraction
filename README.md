@@ -8,8 +8,7 @@
 - Feature extraction on clustered images 
 - SVM classification of extracted features 
 
-## Getting started 
-### Folder structure
+## Folder structure
 Recomended data structure
 - __data__
    - __CAE__
@@ -32,7 +31,7 @@ The results from the automatic segmentaton and clustering will be saved in the p
 ## Setting parameters
 ### CAE
 Convolutional autoencoder for dimensionality reduction of image patches. The CAE can be trained using either 2D and 3D patches.
-#### 2D-CAE
+### 2D-CAE
 To utilize 2D autoencoder the patch-size has to be on the form 
 ```bash
 cae_patch_size = (1, 48, 48)
@@ -46,7 +45,7 @@ Additionally the minimum number of labeled voxels for each patch has to be speci
 min_labeled_pixels=0.5
 ```
 which indicates that at least 50 % of the voxels from a patch has to be labeled as segmentation for the CAE to use it for training/predicting. 
-#### 3D-CAE
+### 3D-CAE
 To utilize 3D autoencoder the patch-size has to be on the form 
 ```bash
 cae_patch_size = (160, 160, 160)
@@ -113,8 +112,8 @@ where a sequence of lines can be
 20 13 0.90
 31 2 0.77
 32 7 0.91
-```
 ...
+```
 where the first column is the patient number, and the last is the ffr values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. Directory paths example:
 ```bash
 feature_dir = 'evaluation/classification/features/ex1/'
