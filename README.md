@@ -43,10 +43,47 @@ The automatic segmentation is based on [miscnn](https://github.com/frankkramer-l
 Clustering of segmentations to be used for the feature extraction. 
 
 ### Feature Extraction
-Features are extracted from the clusters using a trained CAE model (2D/3D). For each cluster the maximum standard deviation is calculated. The result is a 1D list with the same size as number of clusters.  
+Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). For each cluster the maximum standard deviation is calculated. The result is a 1D list with the same size as number of clusters.
 
 ### SVM-classification 
-The extracted features are classified by Support Vector Machines. The patients are labled based on ffr measurements.
+The extracted features are loaded and  are classified by Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value.
 
+## Setting parameters
+F
+### 2D-CAE
+To use utilize 2D autoencoder the patch-size has to be on the form 
+```bash
+cae_patch_size = (1, 48, 48)
+```
+and a patch-overlap has to be specified
+```bash
+patch_overlap=(0, 40, 40)
+```
+for a patch size of 48x48 and maximum overlap of 40 in both directions. Additionally the minimum number of labeled voxels for each patch has to be specified
+```bash
+min_labeled_pixels=0.5
+```
+which indicates that at least 50 % of the voxels from a patch has to be labeled as segmentation for the CAE to use it for training/predicting. 
+
+### 3D-CAE
+To use utilize 3D autoencoder the patch-size has to be on the form 
+```bash
+cae_patch_size = (160, 160, 160)
+```
+A maximum number of patches can be specified
+```bash
+max_patches=100000
+```
+otherwise, patches will be extracted with a overlap of (x-1,y-1,z-1). Also for the 3D autoencoder the minimum number of labeled voxels has to be specified.
+
+### Clustering
+
+
+
+## Running the program
+To start the program execute the main script
+```bash
+python3 main.py
+```
 
 
