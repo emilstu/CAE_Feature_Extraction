@@ -23,7 +23,7 @@ Recomended data structure
      - __as\_model__
        - [model.best.hdf5](classification/as_model/model.best.hdf5)
      - __ffr\_data__
-       - [20181206\_ffr\_vals](classification/ffr_data/ffr_vals)
+       - [ffr\_vals](classification/ffr_data/ffr_vals)
      - __patients__
        - __CT\_FFR\_25__
          - [imaging.nii.gz](classification/patients/CT_FFR_25/imaging.nii.gz)(input)
