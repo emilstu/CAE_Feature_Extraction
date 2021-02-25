@@ -1,13 +1,12 @@
 # CAE Feature Extraction
 
-## Program for extracting features from medical images
+## Program for extracting features from LV-myocardium
 
 - Convolutional autoencoder (2D/3D)
-- Automatic segmentation (from a trained model) using miscnn
+- Automatic segmentation (from a trained model) using [MIScnn](https://github.com/frankkramer-lab/MIScnn)
 - Kmeans clustering
 - Feature extraction on clustered images 
 - SVM classification of extracted features 
-
 
 ## Folder structure
 Recomended data structure
@@ -62,7 +61,7 @@ Directory paths example:
 pc_input_dir = 'data/classification/patients/'
 ```
 ### Automatic segmentation
-The automatic segmentation is based on [miscnn](https://github.com/frankkramer-lab/MIScnn), and is utilized on the classification data.
+The automatic segmentation is based on [MIScnn](https://github.com/frankkramer-lab/MIScnn), and is utilized on the classification data.
 
 Directory paths example:
 ```bash
