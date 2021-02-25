@@ -109,7 +109,7 @@ A sequence of lines in the ffr_file can be
 32 7 0.91
 ...
 ```
-The first column is the patient number, and the last is the ffr-values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. 
+The first column is the patient number, and the last is the ffr-values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. All the patients in the classification folder have to be represented in the file.
 
 Directory paths example:
 ```bash
