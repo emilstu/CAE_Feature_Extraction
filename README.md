@@ -31,7 +31,7 @@ Recomended data structure
          - [cluster.nii.gz](classification/patients/CT_FFR_25/cluster.nii.gz)(output)
 
 
-The results from the automatic segmentaton and clustering will then be saved in the patients folder for classification (marked output)
+The results from the automatic segmentaton and clustering will be saved in the patients folder for classification (marked output)
 
 ### CAE
 Convolutional autoencoder for dimensionality reduction of image patches. The CAE can be trained using either 2D and 3D patches. Utilized on CAE data, where manual segmentations are available.
