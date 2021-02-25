@@ -34,22 +34,16 @@ Recomended data structure
 The results from the automatic segmentaton and clustering will be saved in the patients folder for classification (marked output)
 
 ### CAE
-Convolutional autoencoder for dimensionality reduction of image patches. The CAE can be trained using either 2D and 3D patches. Utilized on CAE data, where manual segmentations are available.
-
 ### Automatic segmentation
-The automatic segmentation is based on [miscnn](https://github.com/frankkramer-lab/MIScnn), and is utilized on the classification data.
-
 ### Clustering (k-means)
-Clustering of segmentations to be used for the feature extraction. 
-
 ### Feature Extraction
-Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). For each cluster the maximum standard deviation is calculated. The result is a 1D list with the same size as number of clusters.
+### SVM-classification
 
-### SVM-classification 
-The extracted features are loaded and  are classified by Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value.
 
 ## Setting parameters
-### 2D-CAE
+### CAE
+Convolutional autoencoder for dimensionality reduction of image patches. The CAE can be trained using either 2D and 3D patches. Utilized on CAE data, where manual segmentations are available.
+#### 2D-CAE
 To utilize 2D autoencoder the patch-size has to be on the form 
 ```bash
 cae_patch_size = (1, 48, 48)
@@ -64,7 +58,7 @@ min_labeled_pixels=0.5
 ```
 which indicates that at least 50 % of the voxels from a patch has to be labeled as segmentation for the CAE to use it for training/predicting. 
 
-### 3D-CAE
+#### 3D-CAE
 To utilize 3D autoencoder the patch-size has to be on the form 
 ```bash
 cae_patch_size = (160, 160, 160)
@@ -75,8 +69,11 @@ max_patches=100000
 ```
 otherwise, patches will be extracted with a overlap of (x-1,y-1,z-1). Also for the 3D autoencoder the minimum number of labeled voxels has to be specified.
 
+### Automatic segmentation
+The automatic segmentation is based on [miscnn](https://github.com/frankkramer-lab/MIScnn), and is utilized on the classification data.
+
 ### Clustering
-For the k-means clustering two parameters must be specified
+k-means clustering of segmentations to be used for the feature extraction. Two parameters must be specified
 ```bash
 num_iters = 100
 num_clusters = 500
@@ -84,7 +81,7 @@ num_clusters = 500
 which is the number of iterations in the main loop of k-means, and the number of clusters the segmentaions should be clustered into.
 
 ### Feature Extraction
-For the feature extraction one paramter must be specified, which can take two possible values 
+Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). For each cluster the maximum standard deviation is calculated. The result is a 1D list with the same size as number of clusters. One paramter must be specified, which can take two possible values 
 ```bash
 voxel_selection = 'center'
 ```
@@ -93,6 +90,9 @@ which selects a cluster for a specific patch based on the center index of the pa
 voxel_selection = 'highest_share'
 ```
 which selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used.
+
+### SVM-classification 
+The extracted features are loaded and  are classified by Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value.
 
 ## Running the program
 To start the program execute the main script
