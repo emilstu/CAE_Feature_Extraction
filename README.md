@@ -1,9 +1,9 @@
 # CAE_Feature_Extraction
-A program for feature extraction and classification of the LV-myocardium properties in relation to measured ffr. The program consist of 
+A program for feature extraction and classification of LV-myocardium properties in relation to measured FFR (Fractional Flow Reserve). The program consist of 
 
 - Convolutional autoencoder (2D/3D) for dimensionality reduction of image patches
 - Automatic segmentation (from a trained model) using [MIScnn](https://github.com/frankkramer-lab/MIScnn)
-- Kmeans clustering 
+- Kmeans clustering
 - Feature extraction
 - SVM classification of extracted features 
 
