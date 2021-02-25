@@ -49,24 +49,23 @@ Features are extracted from the clusters by utilizing a trained CAE model (2D/3D
 The extracted features are loaded and  are classified by Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value.
 
 ## Setting parameters
-F
 ### 2D-CAE
-To use utilize 2D autoencoder the patch-size has to be on the form 
+To utilize 2D autoencoder the patch-size has to be on the form 
 ```bash
 cae_patch_size = (1, 48, 48)
 ```
-and a patch-overlap has to be specified
+A patch-overlap has to be specified
 ```bash
 patch_overlap=(0, 40, 40)
 ```
-for a patch size of 48x48 and maximum overlap of 40 in both directions. Additionally the minimum number of labeled voxels for each patch has to be specified
+Additionally the minimum number of labeled voxels for each patch has to be specified
 ```bash
 min_labeled_pixels=0.5
 ```
 which indicates that at least 50 % of the voxels from a patch has to be labeled as segmentation for the CAE to use it for training/predicting. 
 
 ### 3D-CAE
-To use utilize 3D autoencoder the patch-size has to be on the form 
+To utilize 3D autoencoder the patch-size has to be on the form 
 ```bash
 cae_patch_size = (160, 160, 160)
 ```
@@ -77,8 +76,23 @@ max_patches=100000
 otherwise, patches will be extracted with a overlap of (x-1,y-1,z-1). Also for the 3D autoencoder the minimum number of labeled voxels has to be specified.
 
 ### Clustering
+For the k-means clustering two parameters must be specified
+```bash
+num_iters = 100
+num_clusters = 500
+```
+which is the number of iterations in the main loop of k-means, and the number of clusters the segmentaions should be clustered into.
 
-
+### Feature Extraction
+For the feature extraction one paramter must be specified, which can take two possible values 
+```bash
+voxel_selection = 'center'
+```
+which selects a cluster for a specific patch based on the center index of the patch, or
+```bash
+voxel_selection = 'highest_share'
+```
+which selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used.
 
 ## Running the program
 To start the program execute the main script
