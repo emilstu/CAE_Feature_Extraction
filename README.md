@@ -41,7 +41,7 @@ Additionally, the minimum number of labeled voxels for each patch has to be spec
 ```bash
 min_labeled_pixels = 0.5
 ```
-which indicates that at least 50 % of the voxels from a patch have to be labeled as segmentation for the CAE to use it for training/predicting. 
+This indicates that at least 50 % of the voxels from a patch have to be labeled as segmentation for the CAE to use it for training/predicting. 
 ### 3D-CAE
 To utilize 3D autoencoder the patch-size has to be on the form 
 ```bash
@@ -100,7 +100,7 @@ Additionally, the name of the ffr-file must be specified
 ```bash
 ffr_filename = 'ffr_vals'
 ```
-where a sequence of lines can be
+A sequence of lines in the ffr_file can be
 ```bash
 ...
 20 11 0.89
