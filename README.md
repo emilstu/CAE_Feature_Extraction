@@ -56,7 +56,6 @@ otherwise, patches will be extracted with an overlap of (x-1,y-1,z-1). Also for 
 
 ## Patient Classification
 For the programs working on the classification data, the input directory has to be specified
-Directory paths example:
 ```bash
 pc_input_dir = 'data/classification/patients/'
 ```
