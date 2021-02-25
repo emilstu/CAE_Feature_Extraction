@@ -9,10 +9,8 @@
 - SVM classification of extracted features 
 
 ## Getting started 
-
 ### Folder structure
 Recomended data structure
-
 - __data__
    - __CAE__
      - __patients__
@@ -30,19 +28,10 @@ Recomended data structure
          - [segmentation.nii.gz](classification/patients/CT_FFR_25/segmentation.nii.gz)(output)
          - [cluster.nii.gz](classification/patients/CT_FFR_25/cluster.nii.gz)(output)
 
-
 The results from the automatic segmentaton and clustering will be saved in the patients folder for classification (marked output)
-
-### CAE
-### Automatic segmentation
-### Clustering (k-means)
-### Feature Extraction
-### SVM-classification
-
-
 ## Setting parameters
 ### CAE
-Convolutional autoencoder for dimensionality reduction of image patches. The CAE can be trained using either 2D and 3D patches. Utilized on CAE data, where manual segmentations are available.
+Convolutional autoencoder for dimensionality reduction of image patches. The CAE can be trained using either 2D and 3D patches.
 #### 2D-CAE
 To utilize 2D autoencoder the patch-size has to be on the form 
 ```bash
@@ -57,7 +46,6 @@ Additionally the minimum number of labeled voxels for each patch has to be speci
 min_labeled_pixels=0.5
 ```
 which indicates that at least 50 % of the voxels from a patch has to be labeled as segmentation for the CAE to use it for training/predicting. 
-
 #### 3D-CAE
 To utilize 3D autoencoder the patch-size has to be on the form 
 ```bash
@@ -71,13 +59,10 @@ otherwise, patches will be extracted with a overlap of (x-1,y-1,z-1). Also for t
 
 ## Patient Classification
 For the the programs working on the classification data, the input directory has du be specified
-
 Directory paths example:
 ```bash
 pc_input_dir = 'data/classification/patients/'
 ```
-
-
 ### Automatic segmentation
 The automatic segmentation is based on [miscnn](https://github.com/frankkramer-lab/MIScnn), and is utilized on the classification data.
 
