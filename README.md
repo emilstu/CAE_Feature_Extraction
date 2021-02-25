@@ -15,18 +15,18 @@ Recomended data structure
 .
 └── data
         ├── CAE
-        │   └── patients
-        │       └── case_00001
-        │           └── imaging.nii.gz      (input)
-        │           └── segmentation.nii.gz (input)     
+        │	└── patients
+        │		└── case_00001
+        │           		└── imaging.nii.gz      (input)
+        │          		└── segmentation.nii.gz (input)     
         └── classification
-            └── patients
-            │   └── case_00002
-            │       └── imaging.nii.gz      (input)
-            │       └── segmentation.nii.gz (output)
-            │       └── cluster.nii.gz      (output)
-            └── as_model
-            └── ffr_data
+ 		└── patients
+           	│   	└── case_00002
+            	│       	└── imaging.nii.gz      (input)
+            	│       	└── segmentation.nii.gz (output)
+            	│       	└── cluster.nii.gz      (output)
+            	└── as_model
+            	└── ffr_data
      
 The results from the automatic segmentaton and clustering will then be saved in the patients folder for classification (marked output)
 
