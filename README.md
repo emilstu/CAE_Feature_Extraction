@@ -112,7 +112,7 @@ where a sequence of lines can be
 32 7 0.91
 ...
 ```
-where the first column is the patient number, and the last is the ffr-values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. 
+The first column is the patient number, and the last is the ffr-values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. 
 
 Directory paths example:
 ```bash
