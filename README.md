@@ -69,8 +69,23 @@ max_patches=100000
 ```
 otherwise, patches will be extracted with a overlap of (x-1,y-1,z-1). Also for the 3D autoencoder the minimum number of labeled voxels has to be specified.
 
+## Patient Classification
+For the the programs working on the classification data, the input directory has du be specified
+
+Directory paths example:
+```bash
+pc_input_dir = 'data/classification/patients/'
+```
+
+
 ### Automatic segmentation
 The automatic segmentation is based on [miscnn](https://github.com/frankkramer-lab/MIScnn), and is utilized on the classification data.
+
+Directory paths example:
+```bash
+as_model_name = 'model.best'
+as_model_dir = 'data/classification/as_model/'
+```
 
 ### Clustering
 k-means clustering of segmentations to be used for the feature extraction. Two parameters must be specified
@@ -91,8 +106,35 @@ voxel_selection = 'highest_share'
 ```
 which selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used.
 
+Directory paths example:
+```bash
+fe_model_dir = 'evaluation/CAE/2D/ex2/'
+fe_model_name = 'model_2D'
+```
+
 ### SVM-classification 
-The extracted features are loaded and  are classified by Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value.
+The extracted features are classified using Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value
+```bash
+ffr_boundary = 0.85
+```
+Additionally the name of the ffr-file must be specified 
+```bash
+ffr_filename = 'ffr_vals'
+```
+where a sequence of lines can be
+```bash
+...
+20 11 0.89
+20 13 0.90
+31 2 0.77
+32 7 0.91
+```
+...
+where the first column is the patient number, and the last is the ffr values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. Directory paths example:
+```bash
+feature_dir = 'evaluation/classification/features/ex1/'
+ffr_dir = 'data/classification/ffr_data/'
+```
 
 ## Running the program
 To start the program execute the main script
