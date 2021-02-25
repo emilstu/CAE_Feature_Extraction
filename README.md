@@ -17,8 +17,8 @@ Recomended data structure
    - __CAE__
      - __patients__
        - __CT\_FFR\_10__
-         - [imaging.nii.gz](CAE/patients/CT_FFR_10/imaging.nii.gz)                      (output)
-         - [segmentation.nii.gz](CAE/patients/CT_FFR_10/segmentation.nii.gz)            (input)            
+         - [imaging.nii.gz](CAE/patients/CT_FFR_10/imaging.nii.gz) (input)
+         - [segmentation.nii.gz](CAE/patients/CT_FFR_10/segmentation.nii.gz)(input)            
    - __classification__
      - __as\_model__
        - [model.best.hdf5](classification/as_model/model.best.hdf5)
@@ -27,8 +27,8 @@ Recomended data structure
      - __patients__
        - __CT\_FFR\_25__
          - [imaging.nii.gz](classification/patients/CT_FFR_25/imaging.nii.gz)           (input)
-         - [segmentation.nii.gz](classification/patients/CT_FFR_25/segmentation.nii.gz)
-         - [cluster.nii.gz](classification/patients/CT_FFR_25/cluster.nii.gz)
+         - [segmentation.nii.gz](classification/patients/CT_FFR_25/segmentation.nii.gz)   (output)
+         - [cluster.nii.gz](classification/patients/CT_FFR_25/cluster.nii.gz)             (output)
 
 
 
