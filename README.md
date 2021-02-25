@@ -36,11 +36,11 @@ cae_patch_size = (1, 48, 48)
 ```
 A patch-overlap has to be specified
 ```bash
-patch_overlap=(0, 40, 40)
+patch_overlap = (0, 40, 40)
 ```
 Additionally, the minimum number of labeled voxels for each patch has to be specified
 ```bash
-min_labeled_pixels=0.5
+min_labeled_pixels = 0.5
 ```
 which indicates that at least 50 % of the voxels from a patch have to be labeled as segmentation for the CAE to use it for training/predicting. 
 ### 3D-CAE
@@ -50,7 +50,7 @@ cae_patch_size = (160, 160, 160)
 ```
 A maximum number of patches can be specified
 ```bash
-max_patches=100000
+max_patches = 100000
 ```
 otherwise, patches will be extracted with an overlap of (x-1,y-1,z-1). Also for the 3D autoencoder, the minimum number of labeled voxels has to be specified.
 
