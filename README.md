@@ -8,6 +8,7 @@
 - Feature extraction on clustered images 
 - SVM classification of extracted features 
 
+
 ## Folder structure
 Recomended data structure
 - __data__
@@ -71,6 +72,7 @@ as_model_name = 'model.best'
 as_model_dir = 'data/classification/as_model/'
 ```
 
+
 ### Clustering
 k-means clustering of segmentations to be used for the feature extraction. Two parameters must be specified
 ```bash
@@ -88,7 +90,7 @@ which selects a cluster for a specific patch based on the center index of the pa
 ```bash
 voxel_selection = 'highest_share'
 ```
-which selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used.
+which selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used. 
 
 Directory paths example:
 ```bash
@@ -114,7 +116,9 @@ where a sequence of lines can be
 32 7 0.91
 ...
 ```
-where the first column is the patient number, and the last is the ffr values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. Directory paths example:
+where the first column is the patient number, and the last is the ffr values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. 
+
+Directory paths example:
 ```bash
 feature_dir = 'evaluation/classification/features/ex1/'
 ffr_dir = 'data/classification/ffr_data/'
