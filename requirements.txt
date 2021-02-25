@@ -1,1 +1,17 @@
-pip install -U tqdm
+
+Keras==2.4.3
+matplotlib==3.0.3
+miscnn==0.38
+nibabel @ file:///home/conda/feedstock_root/build_artifacts/nibabel_1606620997676/work
+numpy @ file:///Users/runner/miniforge3/conda-bld/numpy_1610324567885/work
+pandas==1.2.1
+Pillow==6.2.2
+scikit-image==0.18.1
+scikit-learn==0.24.1
+scipy==1.4.1
+SimpleITK==1.2.4
+tensorflow==2.2.0
+torch==1.7.1
+torchio==0.18.18
+tqdm==4.57.0
+

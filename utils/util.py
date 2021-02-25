@@ -7,7 +7,6 @@ import os
 from sklearn.utils import check_array, check_random_state
 from numpy.lib.stride_tricks import as_strided
 import shutil
-from csv import reader
 from collections import Counter
 from collections import defaultdict
 import json

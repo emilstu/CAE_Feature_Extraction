@@ -24,9 +24,10 @@ class AutomaticSegmentation:
         self.model_dir = model_dir
         self.input_dir = input_dir
 
-    
     def run(self):
-       
+        # Create sample list for miscnn
+        util.create_sample_list(self.input_dir)
+
         # Initialize Data IO Interface for NIfTI data
         interface = NIFTI_interface(channels=1, classes=2)
 

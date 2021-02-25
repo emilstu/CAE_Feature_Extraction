@@ -19,15 +19,19 @@ delete_tmp = True
 #-----------------------------------------------------#
 #             2D/3D Convolutional Autoencoder         #
 #-----------------------------------------------------#
-cae_input_dir = 'data/CAE/'
+cae_input_dir = 'data/CAE/patients/'
 cae_model_dir = ''
 
-#cae_patch_size = (200, 200, 200)
+# 2D
 cae_patch_size = (1, 48, 48) 
 patch_overlap=(0, 40, 40)
 min_labeled_pixels=0.5
-max_patches = 20
 
+# 3D
+max_patches = 20
+#cae_patch_size = (200, 200, 200)
+
+# Training parameters
 batch_size = 500
 epochs = 1
 batches_per_epoch = 1
@@ -58,8 +62,6 @@ feature_dir = 'evaluation/classification/features/ex1/'
 ffr_dir = 'data/classification/ffr_data/'
 ffr_filename = '20181206_ffr_vals'
 ffr_boundary = 0.85
-
-util.create_sample_list(pc_input_dir)
 
 #-----------------------------------------------------#
 #             2D/3D Convolutional Autoencoder         #
