@@ -1,4 +1,3 @@
-from numpy.lib.function_base import delete
 from automatic_segmentation import AutomaticSegmentation
 from clustering import Clustering
 from feature_extraction import FeatureExtraction
@@ -9,33 +8,32 @@ from utils import util
 #-----------------------------------------------------#
 #               Program Parameters                    #
 #-----------------------------------------------------#
-autoencoder = False
-automatic_segmentation = True
-cluster = True
+autoencoder = True
+automatic_segmentation = False
+cluster = False
 extract_features = True
 classify = True
-delete_tmp = True
 
 #-----------------------------------------------------#
 #             2D/3D Convolutional Autoencoder         #
 #-----------------------------------------------------#
 cae_input_dir = 'data/CAE/patients/'
-cae_model_dir = ''
+cae_model_dir = None#'evaluation/CAE/3D/ex1/'
 
-# 2D
+# 2D CAE
 cae_patch_size = (1, 48, 48) 
-patch_overlap=(0, 40, 40)
-min_labeled_pixels=0.5
+patch_overlap=(0, 0, 0)
+min_labeled_pixels=None
 
-# 3D
+# 3D CAE
 max_patches = 20
-#cae_patch_size = (200, 200, 200)
+#cae_patch_size = (32, 32, 32)
 
 # Training parameters
 batch_size = 500
-epochs = 1
+epochs = 10
 batches_per_epoch = 1
-cae_test_size = 0.5
+cae_test_size = 0.2
 
 #-----------------------------------------------------#
 #               Patient Classification                #
@@ -49,19 +47,19 @@ as_model_dir = 'data/classification/as_model/'
 as_patch_size = (160, 160, 80) 
 
 # Clustering
-num_iters = 100
-num_clusters = 500
+num_iters = 10
+num_clusters = 5
 
 # Feature Extraction
-fe_model_dir = 'evaluation/CAE/2D/ex2/'
-fe_model_name = 'model_2D'
-voxel_selection = 'center' #'highest_share'
+fe_model_dir = 'evaluation/CAE/3D/ex1/'
+fe_model_name = 'model_3D'
+cluster_selection = 'center' #'highest_share'
 
 # SVM Classification
 feature_dir = 'evaluation/classification/features/ex1/'
 ffr_dir = 'data/classification/ffr_data/'
 ffr_filename = '20181206_ffr_vals'
-ffr_boundary = 0.85
+ffr_cut_off = 0.85
 
 #-----------------------------------------------------#
 #             2D/3D Convolutional Autoencoder         #
@@ -72,10 +70,10 @@ if autoencoder:
                 min_labeled_pixels=min_labeled_pixels,
                 test_size=cae_test_size,
                 input_dir=cae_input_dir,
-                model_dir=cae_model_dir )
+                max_patches=max_patches )
 
     cae.train(batch_size, epochs, batches_per_epoch)
-    cae.predict(batch_size, delete_patches=True)
+    cae.predict(batch_size, batches_per_epoch, cae_model_dir)
 
 
 #-----------------------------------------------------#
@@ -105,7 +103,7 @@ if extract_features:
                             patch_overlap=patch_overlap,
                             min_labeled_pixels=min_labeled_pixels,
                             num_clusters=num_clusters,
-                            voxel_selection=voxel_selection,
+                            cluster_selection=cluster_selection,
                             max_patches=max_patches,
                             model_dir=fe_model_dir,
                             input_dir=pc_input_dir  )
@@ -118,13 +116,11 @@ if classify:
                             ffr_dir=ffr_dir,
                             ffr_filename=ffr_filename,
                             input_dir=pc_input_dir,
-                            ffr_boundary=ffr_boundary,   
+                            ffr_cut_off=ffr_cut_off,   
                             test_size=pc_test_size  )
                             
     svm.train()
     svm.predict()
 
-if delete_tmp:
-    util.delete_tmp_files()
     
 

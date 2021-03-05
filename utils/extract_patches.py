@@ -1,78 +1,48 @@
 import numpy as np
-import glob
 import nibabel as nib
 import torch
 import torchio as tio
-import random
-from keras.models import model_from_json 
-import pickle
-import os
-import csv
 from sklearn.utils import check_array, check_random_state
 import numbers
 from numpy.lib.stride_tricks import as_strided
-import shutil
 from tqdm import tqdm
 
 
-def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, patch_size=(1, 48, 48), patch_overlap=(0, 0, 0), min_labeled_pixels=0.0):
+def extract_2d_patches(img_filenames, patch_size, patch_overlap, min_labeled_pixels=None, labelmap_filenames=None):
+    """Reshape a 3D volumes into a collection of 2D patches
+    The resulting patches are allocated in a dedicated array.
     
-    out_dir_img = ''
-    out_dir_seg = ''
-    out_dir_clus = ''
-
-
-    print(f'\n\nExtracting patches from: {img_filenames}')
-    # Make out directories for patches depending on assignment 
-    if clus_filenames is not None:
-        out_dir_img = 'tmp/classification/2D/patches/img/'
-        out_dir_clus = 'tmp/classification/2D/patches/clus/'
-
-        # Start with brand new directories 
-        if os.path.exists(out_dir_img):
-            shutil.rmtree(out_dir_img)
-        os.makedirs(out_dir_img)
-
-        if os.path.exists(out_dir_clus):
-            shutil.rmtree(out_dir_clus)
-        os.makedirs(out_dir_clus)
-
-    elif seg_filenames is not None:
-        out_dir_img = 'tmp/CAE/2D/patches/img/'
-        out_dir_seg = 'tmp/CAE/2D/patches/seg/'
-
-        # Start with brand new directories 
-        if os.path.exists(out_dir_img):
-            shutil.rmtree(out_dir_img)
-        os.makedirs(out_dir_img)
-
-        if os.path.exists(out_dir_seg):
-            shutil.rmtree(out_dir_seg)
-        os.makedirs(out_dir_seg)
-    
-    else:
-        out_dir_img = 'tmp/CAE/2D/patches/img/'
+    Parameters
+    ----------
+    img_filenames : list of strings  
+        Paths to images to extract patches from 
+    patch_size : tuple of ints (patch_x, patch_y, patch_z)
+        The dimensions of one patch
+    patch_overlap : tuple of ints (0, patch_x, patch_y)
+        The maximum patch overlap between the patches 
+    min_labeled_pixels : float between 0 and 1
+        The minimum percentage of labeled pixels for a patch. If set to None patches are extracted based on center_voxel.
+    labelmap_filenames : list of strings 
+        Paths to labelmap
         
-        if os.path.exists(out_dir_img):
-            shutil.rmtree(out_dir_img)
-        os.makedirs(out_dir_img)
-
-
-    patch_img_filenames = []
-    patch_seg_filenames = []
-    patch_clus_filenames = []
-    num_of_patches = 0
-    # Create patches with minimum number of pixels from segmentation pr patch
+    Returns
+    -------
+    img_patches, label_patches : array, shape = (n_patches, patch_x, patch_y, patch_z, 1)
+         The collection of patches extracted from the volumes, where `n_patches`
+         is the total number of patches extracted.
+    Examples
+    --------
+    TBD
+    """
+    
+    print(f'\n\nExtracting patches from: {img_filenames}\n')
+    img_patches = []
+    label_patches = []
     for i in tqdm(range(len(img_filenames)), leave=False):
-        if clus_filenames is not None:
+        if labelmap_filenames is not None:
             subject = tio.Subject(
                 img=tio.Image(img_filenames[i], type=tio.INTENSITY),
-                cluster=tio.LabelMap(clus_filenames[i])
-            )
-        elif seg_filenames is not None:
-            subject = tio.Subject(
-                img=tio.Image(img_filenames[i], type=tio.INTENSITY),
-                segmentation=tio.LabelMap(seg_filenames[i])
+                labelmap=tio.LabelMap(labelmap_filenames[i])
             )
         else:
             subject = tio.Subject(
@@ -85,61 +55,43 @@ def extract_2d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
             patch_overlap,
         )
         
-
-        for patch in sampler:
-            if clus_filenames is not None:
-                if torch.count_nonzero(patch.cluster.data) >= patch_size[1] * patch_size[2] * min_labeled_pixels:                    
-                    # Save image pathces
-                    patch.img.save(out_dir_img + f'img_patch_{num_of_patches}.nii.gz')
-                    patch_img_filenames.append(out_dir_img + f'img_patch_{num_of_patches}.nii.gz')
-                    
-                    # Save cluster patches
-                    patch.cluster.save(out_dir_clus + f'clus_patch_{num_of_patches}.nii.gz')
-                    patch_clus_filenames.append(out_dir_clus + f'clus_patch_{num_of_patches}.nii.gz')
-                    
-                    num_of_patches += 1
-             
-            elif seg_filenames is not None:
-                if torch.count_nonzero(patch.segmentation.data) >= patch_size[1] * patch_size[2] * min_labeled_pixels:                    
-                    # Save image pathces
-                    patch.img.save(out_dir_img + f'img_patch_{num_of_patches}.nii.gz')
-                    patch_img_filenames.append(out_dir_img + f'img_patch_{num_of_patches}.nii.gz')
-                    
-                    # Save segmentation patches
-                    patch.segmentation.save(out_dir_seg + f'seg_patch_{num_of_patches}.nii.gz')
-                    patch_seg_filenames.append(out_dir_seg + f'seg_patch_{num_of_patches}.nii.gz')
-                    
-                    num_of_patches += 1
-
+        for patch in sampler:    
+            # Extract patches based on labelmap
+            if labelmap_filenames is not None:
+                img_patch = np.array(patch.img.data)
+                label_patch = np.array(patch.labelmap.data)
+                # Extract patches based on labeled voxels
+                if min_labeled_pixels is not None:
+                    if torch.count_nonzero(patch.labelmap.data) >= patch_size[1] * patch_size[2] * min_labeled_pixels:
+                        img_patches.append(img_patch)
+                        label_patches.append(label_patch)
+                # Extract patches based on min center voxel
+                elif label_patch[0,0,int(patch_size[1]/2), int(patch_size[2]/2)] != 0:
+                    img_patches.append(img_patch)
+                    label_patches.append(label_patch)
+            
+            # Extract patches from whole image
             else:
-                # Save only image patches
-                patch.img.save(out_dir_img + f'img_patch_{num_of_patches}.nii.gz')
-                patch_img_filenames.append(out_dir_img + f'img_patch_{num_of_patches}.nii.gz')
-
-                num_of_patches += 1
+                img_patch = np.array(patch.img.data)
+                img_patches.append(img_patch)
     print(f'\tFinished extracting patches.')
-
-    patch_img_filenames = np.array(patch_img_filenames)
-    patch_seg_filenames = np.array(patch_seg_filenames)
-    patch_clus_filenames = np.array(patch_clus_filenames)
+    
+    img_patches = np.array(img_patches).reshape(len(img_patches), patch_size[1], patch_size[2], 1)
+    label_patches = np.array(label_patches).reshape(len(label_patches), patch_size[1], patch_size[2], 1)
+    
+    return img_patches, label_patches
     
 
-        
-    return patch_img_filenames, patch_seg_filenames, patch_clus_filenames
-    
+#https://github.com/konopczynski/Vessel3DDL/blob/master/scripts/utils/patches_3d.py
 
-
-
-    #https://github.com/konopczynski/Vessel3DDL/blob/master/scripts/utils/patches_3d.py
-
-def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, patch_size=(32, 32, 32), max_patches=None, random_state=None):
-    """Reshape a 3D volume into a collection of patches
+def extract_3d_patches(img_filenames, patch_size, max_patches=None, random_state=None, labelmap_filenames=None, extract_labelmap_patches=False):
+    """Reshape a 3D volumes into a collection of patches
     The resulting patches are allocated in a dedicated array.
-    Read more in the :ref:`User Guide <image_feature_extraction>`.
+
     Parameters
     ----------
-    volume : array, shape = (volume_x, volume_y, volume_z)
-        No channels are allowed
+    img_filenames : list of strings  
+        Paths to images to extract patches from 
     patch_size : tuple of ints (patch_x, patch_y, patch_z)
         the dimensions of one patch
     max_patches : integer or float, optional default is None
@@ -149,72 +101,29 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
     random_state : int or RandomState
         Pseudo number generator state used for random sampling to use if
         `max_patches` is not None.
+    extract_labelmap_patches : boolean
+        Set to True if labelmap patches should be extracted 
+
     Returns
     -------
-    patches : array, shape = (n_patches, patch_x, patch_y, patch_z)
+    img_all_patches, clus_all_patches : array, shape = (n_patches, patch_x, patch_y, patch_z, 1)
          The collection of patches extracted from the volume, where `n_patches`
-         is either `max_patches` or the total number of patches that can be
+         is either `len(img_filenames)*max_patches` or the total number of patches that can be
          extracted.
-    Examples
-    --------
-    TBD
     """
-
-    out_dir_img = ''
-    out_dir_seg = ''
-    out_dir_clus = ''
-
-    print(f'\n\nExtracting patches from: {img_filenames}')
-    # Make out directories for patches depending on assignment 
-    if clus_filenames is not None:
-        
-        out_dir_img = 'tmp/classification/3D/patches/img'
-        out_dir_clus = 'tmp/classification/3D/patches/clus'
-
-        # Start with brand new directories 
-        if os.path.exists(out_dir_img):
-            shutil.rmtree(out_dir_img)
-        os.makedirs(out_dir_img)
-
-        if os.path.exists(out_dir_clus):
-            shutil.rmtree(out_dir_clus)
-        os.makedirs(out_dir_clus)
-
-    elif seg_filenames is not None:
-
-        out_dir_img = 'tmp/CAE/3D/patches/img/'
-        out_dir_seg = 'tmp/CAE/3D/patches/seg/'
-
-        # Start with brand new directories 
-        if os.path.exists(out_dir_img):
-            shutil.rmtree(out_dir_img)
-        os.makedirs(out_dir_img)
-
-        if os.path.exists(out_dir_seg):
-            shutil.rmtree(out_dir_seg)
-        os.makedirs(out_dir_seg)
-    
-    else:
-        out_dir_img = 'tmp/CAE/3D/patches/img/'
-
-        if os.path.exists(out_dir_img):
-            shutil.rmtree(out_dir_img)
-        os.makedirs(out_dir_img)
-
-
     img_all_patches = []
     clus_all_patches = []
-    
+
+    print(f'\n\nExtracting patches from: {img_filenames}\n')
     for i in tqdm(range(len(img_filenames)), leave=False):
         img = nib.load(img_filenames[i])
-        seg = nib.load(seg_filenames[i])
-        if clus_filenames is not None:
-             clus = nib.load(clus_filenames[i])
+        labelmap = nib.load(labelmap_filenames[i])
         
         volume = img.get_data()
-        mask = seg.get_data()
-        if clus_filenames is not None:
-            clus = clus.get_data()
+        mask = labelmap.get_data()
+
+        if extract_labelmap_patches:
+            clus = labelmap.get_data()
         
         # Start patch extraction 
         v_x, v_y, v_z = volume.shape[:3]
@@ -235,22 +144,22 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
         volume = check_array(volume, allow_nd=True)
         volume = volume.reshape((v_x, v_y, v_z, -1))
         
-        if clus_filenames is not None:
+        if extract_labelmap_patches:
             clus = check_array(clus, allow_nd=True)
             clus = clus.reshape((v_x, v_y, v_z, -1))
         
         n_colors = volume.shape[-1]
        
+        # Extract patches 
         img_extracted_patches = extract_patches(volume, patch_shape=(p_x, p_y, p_z, n_colors), extraction_step=1)
-        
-        if clus_filenames is not None:
+        if extract_labelmap_patches:
             clus_extracted_patches = extract_patches(clus, patch_shape=(p_x, p_y, p_z, n_colors), extraction_step=1)
 
         n_patches = _compute_n_patches_3d(v_x, v_y, v_z, p_x, p_y, p_z, max_patches)
         # check the indexes where mask is True
         M=np.array(np.where(mask[int(p_x/2):int(v_x-p_x/2),
                                 int(p_y/2):int(v_y-p_y/2),
-                                int(p_z/2):int(v_z-p_z/2)]==True)).T
+                                int(p_z/2):int(v_z-p_z/2)]!=0)).T
         if max_patches:
             rng = check_random_state(random_state)
             indx = rng.randint(len(M), size=n_patches)
@@ -258,23 +167,31 @@ def extract_3d_patches(img_filenames, seg_filenames=None, clus_filenames=None, p
             j_s = M[indx][:,1]
             k_s = M[indx][:,2]        
             img_patches = img_extracted_patches[i_s, j_s, k_s, 0]
-            if clus_filenames is not None:
+            if extract_labelmap_patches:
                 clus_patches = clus_extracted_patches[i_s, j_s, k_s, 0]
         else:
             img_patches = img_extracted_patches
-            if clus_filenames is not None:
+            if extract_labelmap_patches:
                 clus_patches = clus_extracted_patches
 
+        # Reshape patches
         img_patches = img_patches.reshape(-1, p_x, p_y, p_z, n_colors)
-
-        if clus_filenames is not None:
+        if extract_labelmap_patches:
             clus_patches = clus_patches.reshape(-1, p_x, p_y, p_z, n_colors)
         
-        
+        # Append patches to lis 
         img_all_patches = append_patches_to_list(img_patches, img_all_patches)
-        if clus_filenames is not None:
+        if extract_labelmap_patches:
             clus_all_patches = append_patches_to_list(clus_patches, clus_all_patches)
+    
     print(f'\tFinished extracting patches.')
+    
+    img_all_patches = np.array(img_all_patches)
+    clus_all_patches = np.array(clus_all_patches)
+
+    print(clus_all_patches.shape)
+
+
     return img_all_patches, clus_all_patches
 
 

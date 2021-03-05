@@ -11,7 +11,6 @@ from collections import Counter
 from collections import defaultdict
 import json
 
-
 def get_nifti_filepaths(dir):
     filepaths=glob.glob(dir + '*.nii.gz')
     filepaths.sort(key=lambda x: int(''.join(filter(str.isdigit, x))))
@@ -55,7 +54,6 @@ def get_paths_from_tree(dir, type='imaging'):
         file_paths.append(f'{dir}{dirlist[i]}/{type}.nii.gz')
     
     return file_paths
-
 
 
 def save_sample_list(filenames, name, out_dir):
@@ -140,37 +138,24 @@ def save_svm_results(accuracy, precision, recall, out_dir):
             f.write("%s: %s\n"%(key,results[key]))
 
 
-def save_fe_results(features, patch_size, patch_overlap, min_labeled_pixels, num_clusters, voxel_selection, input_dir, out_dir): 
-    # Add info to dict 
-    info = {'patch_size': patch_size,
-            'patch_overlap': patch_overlap,
-            'min_labeled_pixels': min_labeled_pixels,
-            'voxel_selection': voxel_selection,
-            'num_clusters': num_clusters
-            }
-    
+def save_features(features, patient, out_dir): 
     # Add results to dict
-    folder_names = get_sub_dirs(input_dir)
-    results = {}
-    for i in range(len(features)):
-        results[folder_names[i]] = features[i]
+    fe_dict = {patient: features}
     
-    # Save dicts
-    with open(f'{out_dir}info.csv', 'w') as f:
-        for key in info.keys():
-            f.write("%s: %s\n"%(key,info[key]))
-
-    with open(f'{out_dir}result.csv', 'w') as f:
-        for key in results.keys():
-            f.write("%s: %s\n"%(key,results[key]))
+    # Append feature to file
+    with open(f'{out_dir}features.csv', 'a') as f:
+        for key in fe_dict.keys():
+            f.write("%s: %s\n"%(key,fe_dict[key]))
     
-    #save_sample_list(features, features, out_dir)
-
+def save_dict(dict, out_dir, filename):
+    with open(f'{out_dir}{filename}', 'w') as f:
+        for key in dict.keys():
+            f.write("%s: %s\n"%(key,dict[key]))
 
 def load_features(feature_dir):
     print('Loading features...')
     features = []
-    with open(f'{feature_dir}result.csv', 'r') as f:
+    with open(f'{feature_dir}features.csv', 'r') as f:
         for row in f:
             feature = row.split(' ', 1)[1]
             feature = feature.strip(']\n[').split(', ')
@@ -180,7 +165,7 @@ def load_features(feature_dir):
     features = np.asarray(features, dtype=np.float64)
     return features
 
-def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_boundary=0.85):
+def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_cut_off=0.85):
     # Get all patients to classify
     classification_patients = get_sub_dirs(pc_input_dir)
     classification_patients = [x.split('_')[-1] for x in classification_patients]
@@ -206,7 +191,7 @@ def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_boundary=
     num = 0
     for values in patient_values.values():
         min_ffr = min(values)
-        if min_ffr > ffr_boundary:
+        if min_ffr > ffr_cut_off:
             target.append(0)
             num += 1
         else:
@@ -251,4 +236,14 @@ def create_sample_list(input_dir):
     # Save to json file
     with open(f'{input_dir}sample_list.json', 'w') as fp:
         json.dump(sample_list, fp)
-        
+    
+def print_shapes(input_dir):
+    img = get_paths_from_tree(input_dir, 'imaging')
+    #clus = get_sub_dirs(input_dir, 'cluster')
+    seg = get_paths_from_tree(input_dir, 'segmentation')
+
+    for i in range(len(img)):
+        print(f'\n{img[i]}')
+        print('img_shape: ', nib.load(img[i]).get_data().shape)
+        print('clus_shape: ', nib.load(seg[i]).get_data().shape)
+    

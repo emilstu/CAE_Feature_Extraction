@@ -1,17 +1,15 @@
 from utils import util, extract_patches
-import os
 import numpy as np
-import tensorflow
-import keras
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from keras.models import Model, model_from_json 
-from keras.layers import Dense, Conv2D, Dropout, BatchNormalization, Input, Reshape, Flatten, Conv2DTranspose, MaxPooling2D, UpSampling2D
+from keras.layers import Dense, Dropout, Input, Reshape, Flatten 
 import random
 from keras.layers import Input
 from keras.models import Model
 from keras.layers.convolutional import Convolution3D, MaxPooling3D, UpSampling3D
-#import pandas as pd
+from keras.callbacks import EarlyStopping
+import tensorflow as tf
 
 
 
@@ -54,89 +52,43 @@ class CAE_3D:
     def extract_patches(self):
         # Extract patches and save to disk
         img_patches, _ = extract_patches.extract_3d_patches(    img_filenames=self.img_filenames,
-                                                                seg_filenames=self.seg_filenames,
+                                                                labelmap_filenames=self.seg_filenames,
                                                                 patch_size=self.patch_size,
-                                                                max_patches=self.max_patches    )
-
-        img_patches = np.asarray(img_patches)
+                                                                max_patches=self.max_patches,    
+                                                                extract_labelmap_patches=False  )
         print(img_patches.shape)
         
         # Split into training and testing 
-        self.patch_train, self.patch_test = train_test_split(img_patches,test_size=self.test_size)
+        self.patch_train, self.patch_test = train_test_split(img_patches,test_size=self.test_size, random_state=55)
         
-        
-        #Save split
-        #util.save_sample_list(self.patch_train_list, 'train_samples', self.out_dir)
-        #util.save_sample_list(self.patch_test_list, 'test_samples', self.out_dir)
 
 
-    def train(self, batch_size, epochs, batches_per_epoch):  
-        random.shuffle(self.patch_train_list)
-        random.shuffle(self.patch_test_list)
-
-        # Calculate number of samples 
-        num_train_samples = batches_per_epoch * batch_size
-        num_test_samples = int(self.test_size*num_train_samples)
-        
-        #self.patch_train = util.load_patches(self.patch_train_list[:num_train_samples])
-        #self.patch_test = util.load_patches(self.patch_test_list[:num_test_samples])
-    
-        # Print some useful info 
-        print(f'\nNumber of training samples: {num_train_samples}')
-        print(f'Number of test samples: {num_test_samples}')
-        print(f'train data shape: {self.patch_train.shape}')
-        print(f'test data shape: {self.patch_test.shape}')
-
-        print('\nBefore normalizing: ')
-        print(f'Pixel max-value train data: {np.max(self.patch_train)}')
-        print(f'Pixel max-value test data: {np.max(self.patch_test)}')
-        print('\n')
-
-        # Normalize and reshape from (num_samples, 1, y, z) to (num_samples, y, z, 1)
-        self.patch_train = util.normalize_data(self.patch_train)
-        self.patch_test = util.normalize_data(self.patch_test)
-        
-        # Print some useful info
-        print('\nAfter normalizing: ')
-        print(f'Pixel max-value train data: {np.max(self.patch_train)}')
-        print(f'Pixel max-value test data: {np.max(self.patch_train)}')
-        print(f'\ninput shape = ({self.patch_size[1]}, {self.patch_size[2]}, 1)')
-
+    def train(self, batch_size, epochs):  
         inp = Input(shape=(self.patch_size[0], self.patch_size[0], self.patch_size[0], 1))
         e = Convolution3D(16, (5, 5, 5), activation='elu', padding='same')(inp)
         e = MaxPooling3D((2, 2, 2), padding='same')(e)
         e = Flatten()(e)
+        e = Dropout(0.5)(e)
         encoded = Dense(512, activation="elu")(e)
-        d = Dense(65536, activation="elu")(encoded)
-        d = Reshape((16, 16, 16, 16))(d)
+        d = Dropout(0.5)(encoded)
+        d = Dense(int(self.patch_size[0]/2)*int(self.patch_size[1]/2)*int(self.patch_size[2]/2)*16, activation="elu")(d)
+        d = Dropout(0.5)(d)
+        d = Reshape((int(self.patch_size[0]/2), int(self.patch_size[1]/2), int(self.patch_size[2]/2), 16))(d)
         d = UpSampling3D((2, 2, 2))(d)
         decoded = Convolution3D(1, (5, 5, 5), activation='elu', padding='same')(d)
-        print("shape of decoded: ")
-        #print(K.int_shape(decoded))
-
-        """
-        inp = Input((self.patch_size[1], self.patch_size[2],1))
-        e = Conv2D(16, (5, 5), activation='elu', padding='same')(inp)
-        e = MaxPooling2D((2, 2))(e)
-        #e = Reshape((4608,1,1))(e)
-        e = Flatten()(e)
-        encoded = Dense(512, activation="elu")(e)
-        d = Dense(18432, activation="elu")(encoded)
-        d = Reshape((24,24,32))(d)
-        d = UpSampling2D((2, 2))(d)
-        decoded = Conv2DTranspose(1,(5, 5), strides=1, activation='elu', padding='same')(d)
-        """
-
+    
         self.autoencoder = Model(inp, decoded)
         self.autoencoder.summary()
         self.autoencoder.compile(optimizer='adam', loss='mse')
+        es_callback = EarlyStopping(monitor='val_loss', patience=50)
 
         history = self.autoencoder.fit( self.patch_train, 
                                         self.patch_train,
                                         epochs=epochs,
                                         batch_size=batch_size,
                                         shuffle=True,
-                                        validation_data=(self.patch_test, self.patch_test)  )
+                                        validation_data=(self.patch_test, self.patch_test),
+                                        callbacks=[es_callback]  )
 
 
         # Save model
@@ -153,13 +105,88 @@ class CAE_3D:
 
 
     def predict(self, batch_size):
-        pass
+        # Make predictions 
+        pred = self.autoencoder.predict(self.patch_test, verbose=1, batch_size=batch_size)
+        
+         # Calculate reconstruction error
+        recon_error = tf.square(pred - self.patch_test)
+
+        # Convert to numpy and normalize
+        recon_error = recon_error.numpy()
+
+        # Calculate and save mse
+        mse = np.mean(recon_error)
+
+        # Normalize for visualization
+        recon_error *= 255.0/recon_error.max()
+
+        # Get random slice number
+        slice_num = np.random.randint(pred.shape[1]-1)
+
+        # Save results to image 
+        plt.figure(figsize=(30, 4))
+        for i in range(10):
+            plt.subplot(3, 10, i+1) 
+            plt.axis('off')
+            plt.imshow(self.patch_test[i, slice_num, ...,0], cmap='gray')
+        plt.savefig(self.out_dir + 'org.png')    
+
+        plt.figure(figsize=(30, 4))
+        for i in range(10):
+            plt.subplot(3, 10, i+1)
+            plt.axis('off')
+            plt.imshow(pred[i, slice_num, ..., 0], cmap='gray')
+        plt.savefig(self.out_dir + 'rec.png')
+
+        plt.figure(figsize=(30, 4))
+        for i in range(10):
+            plt.subplot(3, 10, i+1)
+            plt.axis('off')
+            plt.imshow(recon_error[i, slice_num, ..., 0], cmap='hsv')
+            plt.clim(0,100)
+            plt.colorbar()
+        plt.savefig(self.out_dir + 'error.png')
+
+        # Add parameters to dict and save it  
+        info = {'patch_size': self.patch_size,
+                'max_patches': self.max_patches,
+                'batch_size': batch_size,
+                'test_size': self.test_size
+                }
+        
+        util.save_dict(info, self.out_dir, 'info.csv')
+        util.save_dict({'mse': mse}, self.out_dir, 'evaluation.csv')
 
 
-    def delete_patches(self):
-        pass
+    
+    def preprocess_data(self, batches_per_epoch, batch_size):
+        # Shuffle data
+        random.shuffle(self.patch_train_list)
+        random.shuffle(self.patch_test_list)
 
+        # Calculate number of samples 
+        num_train_samples = batches_per_epoch * batch_size
+        num_test_samples = int(self.test_size*num_train_samples)
+    
+        # Print some useful info 
+        print(f'\nNumber of training samples: {num_train_samples}')
+        print(f'Number of test samples: {num_test_samples}')
+        print(f'train data shape: {self.patch_train.shape}')
+        print(f'test data shape: {self.patch_test.shape}')
 
+        print('\nBefore normalizing: ')
+        print(f'Pixel max-value train data: {np.max(self.patch_train)}')
+        print(f'Pixel max-value test data: {np.max(self.patch_test)}')
+
+        # Normalize and reshape from (num_samples, 1, y, z) to (num_samples, y, z, 1)
+        self.patch_train = util.normalize_data(self.patch_train)
+        self.patch_test = util.normalize_data(self.patch_test)
+        
+        # Print some useful info
+        print('\nAfter normalizing: ')
+        print(f'Pixel max-value train data: {np.max(self.patch_train)}')
+        print(f'Pixel max-value test data: {np.max(self.patch_train)}')
+        print(f'\ninput shape = ({self.patch_size[0]}, {self.patch_size[1]}, {self.patch_size[2]}, 1)')
 
 
 

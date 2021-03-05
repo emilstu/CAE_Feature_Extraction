@@ -78,11 +78,11 @@ which is the number of iterations in the main loop of k-means, and the number of
 ### Feature Extraction
 Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). For each cluster, the maximum standard deviation is calculated. The result is a 1D list with the same size as the number of clusters. One parameter must be specified, which can take two possible values 
 ```bash
-voxel_selection = 'center'
+cluster_selection = 'center'
 ```
 which selects a cluster for a specific patch based on the center index of the patch, or
 ```bash
-voxel_selection = 'highest_share'
+cluster_selection = 'highest_share'
 ```
 which selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used. 
 
@@ -94,7 +94,7 @@ fe_model_name = 'model_2D'
 ### SVM-classification 
 The extracted features are classified using Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value
 ```bash
-ffr_boundary = 0.85
+ffr_cut_off = 0.85
 ```
 Additionally, the name of the ffr-file must be specified 
 ```bash
