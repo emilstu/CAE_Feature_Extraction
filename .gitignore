@@ -2,6 +2,7 @@
 data/
 evaluation/
 CCTA/
+tmp/
 
 # Editors
 .vscode/

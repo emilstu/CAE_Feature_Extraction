@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 import os
-import shutil
+from matplotlib.colors import LogNorm
 
 class CAE:
     def __init__(self, input_dir, patch_size, batch_size, test_size, prepare_batches):
@@ -144,16 +144,13 @@ class CAE:
         # Calculate mse
         mse = np.mean(recon_error)
        
-        # Normalize for visualization
-        recon_error *= 1000/recon_error.max()
-
         if self.patch_size[0] != 1:
             slice_num = np.random.randint(pred.shape[1]-1)
 
         # Save results
-        plt.figure(figsize=(30, 4))
-        for i in range(10):
-            plt.subplot(3, 10, i+1) 
+        plt.figure(figsize=(12, 10))
+        for i in range(25):
+            plt.subplot(5, 5, i+1) 
             plt.axis('off')
             if self.patch_size[0] != 1:
                 plt.imshow(val_data[i, slice_num, ...,0], cmap='gray')
@@ -162,9 +159,9 @@ class CAE:
 
         plt.savefig(self.out_dir + 'org.png')    
 
-        plt.figure(figsize=(30, 4))
-        for i in range(10):
-            plt.subplot(3, 10, i+1)
+        plt.figure(figsize=(12, 10))
+        for i in range(25):
+            plt.subplot(5, 5, i+1)
             plt.axis('off')
             if self.patch_size[0] != 1:
                 plt.imshow(pred[i, slice_num, ..., 0], cmap='gray')
@@ -172,15 +169,15 @@ class CAE:
                 plt.imshow(pred[i, ..., 0], cmap='gray')
         plt.savefig(self.out_dir + 'rec.png')
 
-        plt.figure(figsize=(30, 4))
-        for i in range(10):
-            plt.subplot(3, 10, i+1)
+        plt.figure(figsize=(12, 10))
+        for i in range(25):
+            plt.subplot(5, 5, i+1)
             plt.axis('off')
             if self.patch_size[0] != 1:
-                plt.imshow(recon_error[i, slice_num, ..., 0], cmap='brg')
+                plt.imshow(recon_error[i, slice_num, ..., 0], cmap='brg', norm=LogNorm(), vmin=0.00001, vmax=1)
             else:
-                plt.imshow(recon_error[i, ..., 0], cmap='brg')
-            plt.clim(0,1000)
+                plt.imshow(recon_error[i, ..., 0], cmap='tab20c', norm=LogNorm(), vmin=0.00001, vmax=1)
+            #plt.clim()
             plt.colorbar()
         plt.savefig(self.out_dir + 'error.png')
 
