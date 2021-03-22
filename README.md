@@ -27,31 +27,38 @@ Recomended data structure
          - [cluster.nii.gz](classification/patients/CT_FFR_25/cluster.nii.gz)(output)
 
 The results from the automatic segmentation and clustering will be saved in the patient folder for classification (marked output)
-## Convolutional Autoencoder 
-### 2D-CAE
-To utilize 2D autoencoder the patch-size has to be on the form 
+## 2D/3D Convolutional Autoencoder
+### Example usage
 ```bash
-cae_patch_size = (1, 48, 48)
+python3 main.py CAE  -patch_size '(1,140,140)' -patch_overlap '(0 ,0, 0)' -sampler_type 'grid' -epochs 1 -batch_size 20 -load_data
 ```
-A patch-overlap has to be specified
+
 ```bash
-patch_overlap = (0, 40, 40)
+python3 main.py CAE -h
+
+usage: main.py CAE [-h] [-data_dir DATA_DIR] -patch_size PATCH_SIZE -patch_overlap PATCH_OVERLAP -sampler_type {grid,label} 
+                        [-min_lab_vox MIN_LAB_VOX] [-label_prob LABEL_PROB] [-max_patches MAX_PATCHES] [-resample RESAMPLE] 
+                        [-epochs EPOCHS] [-batch_size BATCH_SIZE] [-test_size TEST_SIZE] [-prepare_batches] [-load_data]
+                        [-model_dir MODEL_DIR]
+
+optional arguments:
+  -h, --help                    show this help message and exit
+  -data_dir DATA_DIR            Directory where data is stored
+  -patch_size PATCH_SIZE        Patch size 2D/3D: "(1,int,int)" or "(int,int,int)"
+  -patch_overlap PATCH_OVERLAP  Patch overlap 2D/3D: (0,int,int) or (int,int,int). Must be even number and smaller than patch size
+  -sampler_type {grid,label}    Sampler type
+  -min_lab_vox MIN_LAB_VOX      Minimum labled voxels used by grid-sampler
+  -label_prob LABEL_PROB        Probability of choosing patches with labeled voxel as center. Used by label-sampler
+  -max_patches MAX_PATCHES      Maximum number of patches to extract
+  -resample RESAMPLE            Resample to common voxel spacing (float,float,float)
+  -epochs EPOCHS                Number of epochs in training of CAE
+  -batch_size BATCH_SIZE        Batch size for training
+  -test_size TEST_SIZE          CAE test size. Float between 0.0 and 1.0
+  -prepare_batches              Specified if batches should be prepared and saved in mini-batches
+  -load_data                    Specified if patches sould be loaded. For this option to work data must exist in the tmp folder
+  -model_dir MODEL_DIR          Directory of model if model should be loaded for prediction
+
 ```
-Additionally, the minimum number of labeled voxels for each patch has to be specified
-```bash
-min_labeled_pixels = 0.5
-```
-This indicates that at least 50 % of the voxels from a patch have to be labeled as segmentation for the CAE to use it for training/predicting. 
-### 3D-CAE
-To utilize 3D autoencoder the patch-size has to be on the form 
-```bash
-cae_patch_size = (160, 160, 160)
-```
-A maximum number of patches can be specified
-```bash
-max_patches = 100000
-```
-otherwise, patches will be extracted with an overlap of (x-1,y-1,z-1). Also for the 3D autoencoder, the minimum number of labeled voxels has to be specified.
 
 ## Patient Classification
 For the programs working on the classification data, the input directory has to be specified
