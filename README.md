@@ -7,8 +7,12 @@ A program for feature extraction and classification of LV-myocardium properties 
 - Feature extraction
 - SVM classification of extracted features 
 
-## Folder structure
-Recomended data structure
+## Getting started
+The necessary packages and dependencies can be found in requirements-file. All the dependencies can be installed thorugh a virtual conda einvironment
+```bash
+conda env create -f requirements.yml
+```
+### Recomended data structure
 - __data__
    - __CAE__
      - __patients__
@@ -27,8 +31,9 @@ Recomended data structure
          - [cluster.nii.gz](classification/patients/CT_FFR_25/cluster.nii.gz)(output)
 
 The results from the automatic segmentation and clustering will be saved in the patient folder for classification (marked output)
+
 ## Running the program
-All the data directories are by default set according to the recomended data structure. For programs using results from other programs (FeEx and SVM) some direcotories have to to specified.  
+All the data directories are by default set according to the recomended data structure. For programs using results from other programs (FeEx and SVM) some direcotories have to to specified.
 ### 2D/3D Convolutional Autoencoder
 ```bash
 python3 main.py CAE -h
@@ -90,7 +95,7 @@ usage: main.py FeEx [-h] [-dd DATA_DIR] -md MODEL_DIR -mn MODEL_NAME -ps PATCH_S
                          [-cs {center,highest_share}] -nc NUM_CLUSTERS [-rs RESAMPLE] -elm ENCODED_LAYER_NUM
 
 optional arguments:
-  -h, --help                                                              show this help message and exit
+  -h, --help                                                              Show this help message and exit
   -dd DATA_DIR, --data_dir DATA_DIR                                       Directory where data is stored
   -md MODEL_DIR, --model_dir MODEL_DIR                                    Directory where model is stored
   -mn MODEL_NAME, --model_name MODEL_NAME                                 Model name, i.e. "model_2D"
