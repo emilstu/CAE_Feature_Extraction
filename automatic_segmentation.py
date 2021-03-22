@@ -17,9 +17,10 @@ import numpy as np
 from tqdm import tqdm
 
 class AutomaticSegmentation:
-    def __init__(self, model_name, patch_size, input_dir, model_dir):
+    def __init__(self, model_name, patch_size, input_dir, model_dir, patch_overlap):
         self.model_name = model_name
         self.patch_size = patch_size
+        self.patch_overlap = patch_overlap
         self.predictions = []
         self.model_dir = model_dir
         self.input_dir = input_dir

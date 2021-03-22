@@ -1,0 +1,20 @@
+name: CAE_LV
+channels:
+  - anaconda
+  - conda-forge
+dependencies:
+  - pip
+  - numpy
+  - matplotlib
+  - pip:
+    - tensorflow
+    - Keras
+    - miscnn
+    - nibabel
+    - scikit-image
+    - scikit-learn
+    - tqdm
+    - torch
+    - torchio
+
+ 

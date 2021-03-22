@@ -9,7 +9,7 @@ import random
 
 class SvmClassifier:
     def __init__(self, feature_dir, ffr_dir, ffr_filename, input_dir, ffr_cut_off, test_size):
-        self.feature_dir = feature_dir
+        self.feature_dir = f'{feature_dir}results/'
         self.ffr_dir = ffr_dir
         self.ffr_filename = ffr_filename
         self.input_dir = input_dir

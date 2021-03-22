@@ -1,15 +1,18 @@
 import numpy as np
 import glob
 import nibabel as nib
+from nibabel import processing
 from keras.models import model_from_json 
 import pickle
 import os
+from numpy.core.fromnumeric import partition
 from sklearn.utils import check_array, check_random_state
 from numpy.lib.stride_tricks import as_strided
 import shutil
 from collections import Counter
 from collections import defaultdict
 import json
+import csv
 
 def get_nifti_filepaths(dir):
     filepaths=glob.glob(dir + '*.nii.gz')
@@ -61,39 +64,7 @@ def save_sample_list(filenames, name, out_dir):
     with open(out_dir + name, 'wb') as fp:
         pickle.dump(filenames_save, fp)
     print(f'Saved {name} to disk')
-
     
-def load_sample_list(name, dir):
-    with open(dir + name, 'rb') as fp:
-        sample_list = pickle.load(fp)
-    
-    print(f'Loaded {name} from disk')
-    return sample_list
-    
-
-def load_patches(filenames):
-    
-    image_array = []
-    # Loop over images
-    for filename in filenames:
-        img = nib.load(filename)
-        img_data = img.get_data()
-        image_array.append(img_data)
-    
-    image_array = np.array(image_array)
-
-    return image_array
-
-
-def normalize_data(data):
-    new_data = data.astype('float32') / np.max(data)
-    return new_data
-
-def reshape_data_2d(data, patch_size):
-    # Reshape data to fit into CAE
-    new_data = np.reshape(data, (len(data), patch_size[1], patch_size[2], 1))
-    return new_data
-
 
 def load_cae_model(model_name, model_dir):
     # load json and create model
@@ -139,31 +110,79 @@ def save_svm_results(accuracy, precision, recall, out_dir):
 
 
 def save_features(features, patient, out_dir): 
-    # Add results to dict
-    fe_dict = {patient: features}
-    
     # Append feature to file
-    with open(f'{out_dir}features.csv', 'a') as f:
-        for key in fe_dict.keys():
-            f.write("%s: %s\n"%(key,fe_dict[key]))
+    with open(f'{out_dir}results/{patient}.csv', 'w', newline='') as f:
+        wr=csv.writer(f)
+        wr.writerow(features)
     
 def save_dict(dict, out_dir, filename):
     with open(f'{out_dir}{filename}', 'w') as f:
         for key in dict.keys():
             f.write("%s: %s\n"%(key,dict[key]))
 
+def create_cae_patch_dir(prepare_batches, patch_size):
+        save_dir=get_cae_patch_dir(prepare_batches, patch_size)
+        # Remove dir if it already exists 
+        if os.path.exists(save_dir):
+            shutil.rmtree(save_dir)
+        os.makedirs(save_dir)
+        return save_dir
+
+def create_fe_patch_dir(patch_size):
+    save_dir=get_fe_patch_dir(patch_size)
+    # Remove dir if it already exists 
+    if os.path.exists(save_dir):
+        shutil.rmtree(save_dir)
+    os.makedirs(save_dir)
+    return save_dir
+
+def get_fe_patch_dir(patch_size):
+    dir=f'tmp/FE/'
+    if patch_size[0]==1:
+        dir+='2D/'
+    else:
+        dir+='3D/'
+    dir+='patches/'
+    return dir
+
 def load_features(feature_dir):
     print('Loading features...')
     features = []
-    with open(f'{feature_dir}features.csv', 'r') as f:
-        for row in f:
-            feature = row.split(' ', 1)[1]
-            feature = feature.strip(']\n[').split(', ')
-            features.append(feature)
-    print('Loaded features')
+    files = [f'{feature_dir}{f}' for f in os.listdir(feature_dir)]
+    print(files)
+    for file in files:     
+        f=open(file, 'r')
+        feature = f.read().strip('\n').split(',')
+        features.append(list(feature))
+        f.close()
     # Convert to numpy 
     features = np.asarray(features, dtype=np.float64)
+    print(features.shape)
     return features
+
+def save_partition(partition, save_dir):
+    file = open(f'{save_dir}partition.pkl', 'wb')
+    pickle.dump(partition, file)
+    file.close()
+
+def load_partition(prepare_batches, patch_size):
+    load_dir=get_cae_patch_dir(prepare_batches, patch_size)
+    file = open(f'{load_dir}partition.pkl', 'rb')
+    partition = pickle.load(file)
+    return partition
+
+def get_cae_patch_dir(prepare_batches, patch_size):
+    dir=f'tmp/CAE/'
+    if patch_size[0]==1:
+        dir+='2D/'
+    else:
+        dir+='3D/'
+    if prepare_batches:
+        dir+='batches/'
+    else:
+        dir+='patches/'
+    return dir
+
 
 def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_cut_off=0.85):
     # Get all patients to classify
@@ -247,3 +266,17 @@ def print_shapes(input_dir):
         print('img_shape: ', nib.load(img[i]).get_data().shape)
         print('clus_shape: ', nib.load(seg[i]).get_data().shape)
     
+def update_affine(img_filename, labelmap_filename):
+    img = nib.load(img_filename)
+    labelmap = nib.load(labelmap_filename)
+    labelmap_data = labelmap.get_data()
+    new_img = nib.Nifti1Image(labelmap_data, img.affine, img.header)
+    nib.save(new_img, labelmap_filename)
+
+def normalize_data(data):
+    new_data = data.astype('float32') / np.max(data)
+    return new_data
+
+def resample_volume(img, voxel_size):
+    resampled_img = nib.processing.resample_to_output(img, voxel_size)
+    return resampled_img
