@@ -7,8 +7,12 @@ A program for feature extraction and classification of LV-myocardium properties 
 - Feature extraction
 - SVM classification of extracted features 
 
-## Folder structure
-Recomended data structure
+## Getting started
+The necessary packages and dependencies can be found in requirements-file. All the dependencies can be installed thorugh a virtual conda einvironment
+```bash
+conda env create -f requirements.yml
+```
+### Recomended data structure
 - __data__
    - __CAE__
      - __patients__
@@ -27,78 +31,98 @@ Recomended data structure
          - [cluster.nii.gz](classification/patients/CT_FFR_25/cluster.nii.gz)(output)
 
 The results from the automatic segmentation and clustering will be saved in the patient folder for classification (marked output)
-## Convolutional Autoencoder 
-### 2D-CAE
-To utilize 2D autoencoder the patch-size has to be on the form 
-```bash
-cae_patch_size = (1, 48, 48)
-```
-A patch-overlap has to be specified
-```bash
-patch_overlap = (0, 40, 40)
-```
-Additionally, the minimum number of labeled voxels for each patch has to be specified
-```bash
-min_labeled_pixels = 0.5
-```
-This indicates that at least 50 % of the voxels from a patch have to be labeled as segmentation for the CAE to use it for training/predicting. 
-### 3D-CAE
-To utilize 3D autoencoder the patch-size has to be on the form 
-```bash
-cae_patch_size = (160, 160, 160)
-```
-A maximum number of patches can be specified
-```bash
-max_patches = 100000
-```
-otherwise, patches will be extracted with an overlap of (x-1,y-1,z-1). Also for the 3D autoencoder, the minimum number of labeled voxels has to be specified.
 
-## Patient Classification
-For the programs working on the classification data, the input directory has to be specified
+## Running the program
+All the data directories are by default set according to the recomended data structure. For programs using results from other programs (FeEx and SVM) some direcotories have to to specified.
+### 2D/3D Convolutional Autoencoder
 ```bash
-pc_input_dir = 'data/classification/patients/'
+python3 main.py CAE -h
+
+usage: main.py CAE [-h] [-dd DATA_DIR] -ps PATCH_SIZE -po PATCH_OVERLAP -st {grid,label} [-mlb MIN_LAB_VOX] [-lb LABEL_PROB]
+                        [-mp MAX_PATCHES] [-rs RESAMPLE] [-e EPOCHS][-bs BATCH_SIZE] [-ts TEST_SIZE] [-pp] [-ld] [-md MODEL_DIR]
+
+optional arguments:
+  -h, --help                                        Show this help message and exit
+  -dd DATA_DIR, --data_dir DATA_DIR                 Directory where data is stored
+  -ps PATCH_SIZE, --patch_size PATCH_SIZE           Patch size 2D/3D: "(1,int,int)" or "(int,int,int)"
+  -po PATCH_OVERLAP, --patch_overlap PATCH_OVERLAP  Patch overlap 2D/3D: (0,int,int) or (int,int,int). Must be even number and smaller than patch size
+  -st {grid,label}, --sampler_type {grid,label}     Sampler type
+  -mlb MIN_LAB_VOX, --min_lab_vox MIN_LAB_VOX       Minimum labled voxels used by grid-sampler
+  -lb LABEL_PROB, --label_prob LABEL_PROB           Probability of choosing patches with labeled voxel as center. Used by label-sampler
+  -mp MAX_PATCHES, --max_patches MAX_PATCHES        Maximum number of patches to extract
+  -rs RESAMPLE, --resample RESAMPLE                 Resample to common voxel spacing (float,float,float)
+  -e EPOCHS, --epochs EPOCHS                        Number of epochs in training of CAE
+  -bs BATCH_SIZE, --batch_size BATCH_SIZE           Batch size for training
+  -ts TEST_SIZE, --test_size TEST_SIZE              CAE test size. Float between 0.0 and 1.0
+  -pp, --prepare_batches                            Specified if batches should be prepared and saved in mini-batches
+  -ld, --load_data                                  Specified if patches sould be loaded. For this option to work data must exist in the tmp folder
+  -md MODEL_DIR, --model_dir MODEL_DIR              Directory of model if model should be loaded for prediction
 ```
 ### Automatic segmentation
-The automatic segmentation is based on [MIScnn](https://github.com/frankkramer-lab/MIScnn), and is utilized on the classification data.
-
-Directory paths example:
+The automatic segmentation is based on [MIScnn](https://github.com/frankkramer-lab/MIScnn). 
 ```bash
-as_model_name = 'model.best'
-as_model_dir = 'data/classification/as_model/'
-```
+python3 main.py AutSeg -h
 
+usage: main.py AutSeg [-h] [-dd DATA_DIR] [-md MODEL_DIR] -mn MODEL_NAME -ps PATCH_SIZE -po PATCH_OVERLAP
+
+optional arguments:
+  -h, --help                                        Show this help message and exit
+  -dd DATA_DIR, --data_dir DATA_DIR                 Directory where data is stored
+  -md MODEL_DIR, --model_dir MODEL_DIR              Directory where model is stored
+  -mn MODEL_NAME, --model_name MODEL_NAME           Model name, i.e. "model.best"
+  -ps PATCH_SIZE, --patch_size PATCH_SIZE           Patch size used when the model was trained: "(int,int,int)"
+  -po PATCH_OVERLAP, --patch_overlap PATCH_OVERLAP  Patch overlap: "(int,int,int)"lap PATCH_OVERLAP  Patch overlap: "(int,int,int)"
+```
 ### Clustering
-k-means clustering of segmentations to be used for the feature extraction. Two parameters must be specified
+k-means clustering of segmentations to be used for the feature extraction.
 ```bash
-num_iters = 100
-num_clusters = 500
-```
-which is the number of iterations in the main loop of k-means, and the number of clusters the segmentaions should be clustered into.
+python3 main.py CLUS -h
 
+usage: main.py CLUS [-h] [-dd DATA_DIR] -i ITERATIONS -nc NUM_CLUSTERS
+
+optional arguments:
+  -h, --help                                     Show this help message and exit
+  -dd DATA_DIR, --data_dir DATA_DIR              Directory where data is stored
+  -i ITERATIONS, --iterations ITERATIONS         Number of iterations to run-kmeans clustering
+  -nc NUM_CLUSTERS, --num_clusters NUM_CLUSTERS  Number of clusters
+```
 ### Feature Extraction
-Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). For each cluster, the maximum standard deviation is calculated. The result is a 1D list with the same size as the number of clusters. One parameter must be specified, which can take two possible values 
+Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). For each cluster, the maximum standard deviation is calculated. The result is a 1D list with the same size as the number of clusters.
 ```bash
-cluster_selection = 'center'
-```
-which selects a cluster for a specific patch based on the center index of the patch, or
-```bash
-cluster_selection = 'highest_share'
-```
-which selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used. 
+python3 main.py FeEx -h
 
-Directory paths example:
-```bash
-fe_model_dir = 'evaluation/CAE/2D/ex2/'
-fe_model_name = 'model_2D'
+usage: main.py FeEx [-h] [-dd DATA_DIR] -md MODEL_DIR -mn MODEL_NAME -ps PATCH_SIZE [-po PATCH_OVERLAP] 
+                         [-cs {center,highest_share}] -nc NUM_CLUSTERS [-rs RESAMPLE] -elm ENCODED_LAYER_NUM
+
+optional arguments:
+  -h, --help                                                              Show this help message and exit
+  -dd DATA_DIR, --data_dir DATA_DIR                                       Directory where data is stored
+  -md MODEL_DIR, --model_dir MODEL_DIR                                    Directory where model is stored
+  -mn MODEL_NAME, --model_name MODEL_NAME                                 Model name, i.e. "model_2D"
+  -ps PATCH_SIZE, --patch_size PATCH_SIZE                                 Patch size 3D/3D: "(1,int,int)" or "(int,int,int)"
+  -po PATCH_OVERLAP, --patch_overlap PATCH_OVERLAP                        Patch overlap 2D/3D: "(0,int,int)" or "(int,int,int)". Must be even number and smaller than patch size
+  -cs {center,highest_share}, --cluster_selection {center,highest_share}  Method used to select which cluster a specific patch belongs to
+  -nc NUM_CLUSTERS, --num_clusters NUM_CLUSTERS                           Number og clusters used in the images to extract features from
+  -rs RESAMPLE, --resample RESAMPLE                                       Resample to common voxel spacing (float,float,float)
+  -elm ENCODED_LAYER_NUM, --encoded_layer_num ENCODED_LAYER_NUM           Number of the encoded layer in CAE-architecture counting from the bottom
 ```
+
+Center-selection selects a cluster for a specific patch based on the center index of the patch. Highest_share-selection selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used. 
 ### SVM-classification 
 The extracted features are classified using Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value
 ```bash
-ffr_cut_off = 0.85
-```
-Additionally, the name of the ffr-file must be specified 
-```bash
-ffr_filename = 'ffr_vals'
+python3 main.py SVM -h
+
+main.py SVM [-h] [-dd DATA_DIR] -fd FEATURE_DIR [-ffd FFR_DIR] -ffn FFR_FILENAME [-ffco FFR_CUT_OFF] [-ts TEST_SIZE]
+
+optional arguments:
+  -h, --help                                      Show this help message and exit
+  -dd DATA_DIR, --data_dir DATA_DIR               Directory where data is stored
+  -fd FEATURE_DIR, --feature_dir FEATURE_DIR      Directory where features are stored, i.e. output from FeEx
+  -ffd FFR_DIR, --ffr_dir FFR_DIR                 Directory ffr_values are stores
+  -ffn FFR_FILENAME, --ffr_filename FFR_FILENAME  Filename for the file where ffr-values are stored
+  -ffco FFR_CUT_OFF, --ffr_cut_off FFR_CUT_OFF    Filename for the file where ffr-values are stored
+  -ts TEST_SIZE, --test_size TEST_SIZE            SVM test size. Float between 0.0 and 1.0
 ```
 A sequence of lines in the ffr_file can be
 ```bash
@@ -110,16 +134,5 @@ A sequence of lines in the ffr_file can be
 ...
 ```
 The first column is the patient number, and the last is the ffr-values. The second column is ignored. If more than one ffr-value exists for a patient the smallest value is chosen. All the patients in the classification folder have to be represented in the file.
-
-Directory paths example:
-```bash
-feature_dir = 'evaluation/classification/features/ex1/'
-ffr_dir = 'data/classification/ffr_data/'
-```
-## Running the program
-To start the program execute the main script
-```bash
-python3 main.py
-```
 
 
