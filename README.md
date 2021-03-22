@@ -10,7 +10,7 @@ A program for feature extraction and classification of LV-myocardium properties 
 ## Getting started
 The necessary packages and dependencies can be found in the requirements.yml file. It can be installed through a virtual conda environment
 ```bash
-conda env create -f requirements.yml
+$ conda env create -f requirements.yml
 ```
 ### Recommended data structure
 - __data__
