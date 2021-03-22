@@ -36,7 +36,7 @@ The results from the automatic segmentation and clustering will be saved in the 
 All the data directories are by default set according to the recommended data structure. For programs using results from other programs (FeEx and SVM) some directories have to be specified.
 ### 2D/3D Convolutional Autoencoder
 ```bash
-$python3 main.py CAE -h
+$ python3 main.py CAE -h
 
 usage: main.py CAE [-h] [-dd DATA_DIR] -ps PATCH_SIZE -po PATCH_OVERLAP -st {grid,label} [-mlb MIN_LAB_VOX] [-lb LABEL_PROB]
                         [-mp MAX_PATCHES] [-rs RESAMPLE] [-e EPOCHS][-bs BATCH_SIZE] [-ts TEST_SIZE] [-pp] [-ld] [-md MODEL_DIR]
@@ -61,7 +61,7 @@ optional arguments:
 ### Automatic segmentation
 The automatic segmentation is based on [MIScnn](https://github.com/frankkramer-lab/MIScnn). 
 ```bash
-python3 main.py AutSeg -h
+$ python3 main.py AutSeg -h
 
 usage: main.py AutSeg [-h] [-dd DATA_DIR] [-md MODEL_DIR] -mn MODEL_NAME -ps PATCH_SIZE -po PATCH_OVERLAP
 
@@ -89,7 +89,7 @@ optional arguments:
 ### Feature Extraction
 Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). For each cluster, the maximum standard deviation is calculated. The result is a 1D list with the same size as the number of clusters.
 ```bash
-python3 main.py FeEx -h
+$ python3 main.py FeEx -h
 
 usage: main.py FeEx [-h] [-dd DATA_DIR] -md MODEL_DIR -mn MODEL_NAME -ps PATCH_SIZE [-po PATCH_OVERLAP] 
                          [-cs {center,highest_share}] -nc NUM_CLUSTERS [-rs RESAMPLE] -elm ENCODED_LAYER_NUM
@@ -111,7 +111,7 @@ Center-selection selects a cluster for a specific patch based on the center inde
 ### SVM-classification 
 The extracted features are classified using Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value
 ```bash
-python3 main.py SVM -h
+$ python3 main.py SVM -h
 
 main.py SVM [-h] [-dd DATA_DIR] -fd FEATURE_DIR [-ffd FFR_DIR] -ffn FFR_FILENAME [-ffco FFR_CUT_OFF] [-ts TEST_SIZE]
 
