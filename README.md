@@ -116,7 +116,7 @@ python3 main.py SVM -h
 main.py SVM [-h] [-dd DATA_DIR] -fd FEATURE_DIR [-ffd FFR_DIR] -ffn FFR_FILENAME [-ffco FFR_CUT_OFF] [-ts TEST_SIZE]
 
 optional arguments:
-  -h, --help                                      show this help message and exit
+  -h, --help                                      Show this help message and exit
   -dd DATA_DIR, --data_dir DATA_DIR               Directory where data is stored
   -fd FEATURE_DIR, --feature_dir FEATURE_DIR      Directory where features are stored, i.e. output from FeEx
   -ffd FFR_DIR, --ffr_dir FFR_DIR                 Directory ffr_values are stores
