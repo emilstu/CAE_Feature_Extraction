@@ -51,9 +51,9 @@ optional arguments:
   -lb LABEL_PROB, --label_prob LABEL_PROB           Probability of choosing patches with labeled voxel as center. Used by label-sampler
   -mp MAX_PATCHES, --max_patches MAX_PATCHES        Maximum number of patches to extract
   -rs RESAMPLE, --resample RESAMPLE                 Resample to common voxel spacing (float,float,float)
-  -e EPOCHS, --epochs EPOCHS                        Number of epochs in training of CAE
+  -e EPOCHS, --epochs EPOCHS                        Number of epochs used when training
   -bs BATCH_SIZE, --batch_size BATCH_SIZE           Batch-size used when training
-  -ts TEST_SIZE, --test_size TEST_SIZE              CAE test size. Float between 0.0 and 1.0
+  -ts TEST_SIZE, --test_size TEST_SIZE              CAE test-size. Float between 0.0 and 1.0
   -pp, --prepare_batches                            Specified when batches should be prepared and saved in mini-batches
   -ld, --load_data                                  Specified when patches sould be loaded. For this option to work data must exist in the tmp folder
   -md MODEL_DIR, --model_dir MODEL_DIR              Directory of model. When specified predictions are made on the loaded model.
@@ -102,9 +102,9 @@ optional arguments:
   -ps PATCH_SIZE, --patch_size PATCH_SIZE                                 Patch size 3D/3D: "(1,int,int)" or "(int,int,int)"
   -po PATCH_OVERLAP, --patch_overlap PATCH_OVERLAP                        Patch overlap 2D/3D: "(0,int,int)" or "(int,int,int)". Must be even number and smaller than patch size
   -cs {center,highest_share}, --cluster_selection {center,highest_share}  Method used to select which cluster a specific patch belongs to
-  -nc NUM_CLUSTERS, --num_clusters NUM_CLUSTERS                           Number og clusters used in the images to extract features from
+  -nc NUM_CLUSTERS, --num_clusters NUM_CLUSTERS                           Number of clusters
   -rs RESAMPLE, --resample RESAMPLE                                       Resample to common voxel spacing (float,float,float)
-  -elm ENCODED_LAYER_NUM, --encoded_layer_num ENCODED_LAYER_NUM           Number of the encoded layer in CAE-architecture counting from the bottom
+  -elm ENCODED_LAYER_NUM, --encoded_layer_num ENCODED_LAYER_NUM           Number of the encoded layer from CAE-architecture counting from the bottom
 ```
 
 Center-selection selects a cluster for a specific patch based on the center index of the patch. Highest_share-selection selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used. 
@@ -122,7 +122,7 @@ optional arguments:
   -ffd FFR_DIR, --ffr_dir FFR_DIR                 Directory ffr_values are stores
   -ffn FFR_FILENAME, --ffr_filename FFR_FILENAME  Filename of file where ffr-values are stored
   -ffco FFR_CUT_OFF, --ffr_cut_off FFR_CUT_OFF    Filename of file where ffr-values are stored
-  -ts TEST_SIZE, --test_size TEST_SIZE            SVM test size. Float between 0.0 and 1.0
+  -ts TEST_SIZE, --test_size TEST_SIZE            SVM test-size. Float between 0.0 and 1.0
 ```
 A sequence of lines in the ffr_file can be
 ```bash
