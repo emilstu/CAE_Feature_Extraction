@@ -36,7 +36,7 @@ The results from the automatic segmentation and clustering will be saved in the 
 All the data directories are by default set according to the recommended data structure. For programs using results from other programs (FeEx and SVM) some directories have to be specified.
 ### 2D/3D Convolutional Autoencoder
 ```bash
-python3 main.py CAE -h
+$python3 main.py CAE -h
 
 usage: main.py CAE [-h] [-dd DATA_DIR] -ps PATCH_SIZE -po PATCH_OVERLAP -st {grid,label} [-mlb MIN_LAB_VOX] [-lb LABEL_PROB]
                         [-mp MAX_PATCHES] [-rs RESAMPLE] [-e EPOCHS][-bs BATCH_SIZE] [-ts TEST_SIZE] [-pp] [-ld] [-md MODEL_DIR]
