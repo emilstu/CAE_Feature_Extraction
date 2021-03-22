@@ -1,5 +1,5 @@
 # CAE_Feature_Extraction
-A program for feature extraction and classification of LV-myocardium properties in relation to measured FFR (Fractional Flow Reserve). The program consist of 
+A program for feature extraction and classification of LV-myocardium properties in relation to measured FFR (Fractional Flow Reserve). The program consists of 
 
 - Convolutional autoencoder (2D/3D) for dimensionality reduction of image patches
 - Automatic segmentation (from a trained model) using [MIScnn](https://github.com/frankkramer-lab/MIScnn)
@@ -8,11 +8,11 @@ A program for feature extraction and classification of LV-myocardium properties 
 - SVM classification of extracted features 
 
 ## Getting started
-The necessary packages and dependencies can be found in requirements-file. All the dependencies can be installed thorugh a virtual conda einvironment
+The necessary packages and dependencies can be found in the requirements.yml file. It can be installed through a virtual conda environment
 ```bash
 conda env create -f requirements.yml
 ```
-### Recomended data structure
+### Recommended data structure
 - __data__
    - __CAE__
      - __patients__
@@ -33,7 +33,7 @@ conda env create -f requirements.yml
 The results from the automatic segmentation and clustering will be saved in the patient folder for classification (marked output)
 
 ## Running the program
-All the data directories are by default set according to the recomended data structure. For programs using results from other programs (FeEx and SVM) some direcotories have to to specified.
+All the data directories are by default set according to the recommended data structure. For programs using results from other programs (FeEx and SVM) some directories have to be specified.
 ### 2D/3D Convolutional Autoencoder
 ```bash
 python3 main.py CAE -h
@@ -55,8 +55,8 @@ optional arguments:
   -bs BATCH_SIZE, --batch_size BATCH_SIZE           Batch-size used when training.
   -ts TEST_SIZE, --test_size TEST_SIZE              CAE test-size. Float between 0.0 and 1.0.
   -pp, --prepare_batches                            Specified when batches should be prepared and saved as mini-batches.
-  -ld, --load_data                                  Specified when patches sould be loaded.
-  -md MODEL_DIR, --model_dir MODEL_DIR              Directory of model. When specified predictions are made on the loaded model.
+  -ld, --load_data                                  Specified when patches should be loaded.
+  -md MODEL_DIR, --model_dir MODEL_DIR              Directory where model is stored. When specified predictions are made on the loaded model.
 ```
 ### Automatic segmentation
 The automatic segmentation is based on [MIScnn](https://github.com/frankkramer-lab/MIScnn). 
