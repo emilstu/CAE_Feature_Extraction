@@ -92,7 +92,8 @@ Features are extracted from the clusters by utilizing a trained CAE model (2D/3D
 ```bash
 $ python3 main.py FeEx -h
 
-usage: main.py FEX [-h] [-dd DATA_DIR] -md MODEL_DIR -mn MODEL_NAME -ps PATCH_SIZE [-po PATCH_OVERLAP] [-mlv MIN_LAB_VOX] [-cs {center,highest_share}] -nc NUM_CLUSTERS[-r RESAMPLE] [-c CLIPPING] [-pn {z-score,minmax,abs}] -eln ENCODED_LAYER_NUM [-spn START_PATIENT_NUM] [-sp]
+usage: main.py FEX [-h] [-dd DATA_DIR] -md MODEL_DIR -mn MODEL_NAME -ps PATCH_SIZE [-po PATCH_OVERLAP] [-mlv MIN_LAB_VOX] [-cs {center,highest_share}] -nc NUM_CLUSTERS
+                   [-r RESAMPLE] [-c CLIPPING] [-pn {z-score,minmax,abs}] -eln ENCODED_LAYER_NUM [-spn START_PATIENT_NUM] [-sp]
 
 optional arguments:
   -h, --help                                                              show this help message and exit
