@@ -5,7 +5,7 @@ A program for feature extraction and classification of LV-myocardium properties 
 - Automatic segmentation (from a trained model) using [MIScnn](https://github.com/frankkramer-lab/MIScnn)
 - Kmeans clustering
 - Feature extraction
-- SVM classification of extracted features 
+- Classification of extracted features 
 
 ## Getting started
 The necessary packages and dependencies can be found in the requirements.yml file. It can be installed through a virtual conda environment
@@ -38,7 +38,8 @@ All the data directories are by default set according to the recommended data st
 ```bash
 $ python3 main.py CAE -h
 
-usage: main.py CAE [-h] [-dd DATA_DIR] -ps PATCH_SIZE -po PATCH_OVERLAP -st {grid,label} [-mlv MIN_LAB_VOX] [-lb LABEL_PROB] [-mp MAX_PATCHES] [-r RESAMPLE] [-c CLIPPING] [-pn {z-score,minmax,abs}] [-e EPOCHS] [-bs BATCH_SIZE] [-ts TEST_SIZE] [-pb] [-ld] [-md MODEL_DIR]
+usage: main.py CAE [-h] [-dd DATA_DIR] -ps PATCH_SIZE -po PATCH_OVERLAP -st {grid,label} [-mlv MIN_LAB_VOX] [-lb LABEL_PROB] [-mp MAX_PATCHES] [-r RESAMPLE] [-c CLIPPING]
+                   [-pn {z-score,minmax,abs}] [-e EPOCHS] [-bs BATCH_SIZE] [-ts TEST_SIZE] [-pb] [-ld] [-md MODEL_DIR]
 
 optional arguments:
   -h, --help                                                   show this help message and exit
@@ -113,21 +114,27 @@ optional arguments:
   -sp, --save_patches                                                     Specified if patches should be saved to disk.
 ```
 Center-selection selects a cluster for a specific patch based on the center index of the patch. Highest_share-selection selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used. 
-### SVM-classification 
+### Classification 
 The extracted features are classified using Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value
 ```bash
-$ python3 main.py SVM -h
+$ python3 main.py CLA -h
 
-main.py SVM [-h] [-dd DATA_DIR] -fd FEATURE_DIR [-ffd FFR_DIR] -ffn FFR_FILENAME [-ffco FFR_CUT_OFF] [-ts TEST_SIZE]
+usage: main.py CLA [-h] [-dd DATA_DIR] -fd FEATURE_DIR [-ffd FFR_DIR] -ffn FFR_FILENAME [-ffc FFR_CUT_OFF] [-f FOLDS] [-i ITERATIONS] [-fs {train,entire}] [-c2 CHI2]
+                   [-mi MUTUAL_INFORMATION] [-plt]
 
 optional arguments:
-  -h, --help                                      Show this help-message and exit.
-  -dd DATA_DIR, --data_dir DATA_DIR               Directory where data is stored.
-  -fd FEATURE_DIR, --feature_dir FEATURE_DIR      Directory where features are stored, i.e. output from FeEx.
-  -ffd FFR_DIR, --ffr_dir FFR_DIR                 Directory ffr_values are stores.
-  -ffn FFR_FILENAME, --ffr_filename FFR_FILENAME  Filename of file where ffr-values are stored.
-  -ffco FFR_CUT_OFF, --ffr_cut_off FFR_CUT_OFF    Filename of file where ffr-values are stored.
-  -ts TEST_SIZE, --test_size TEST_SIZE            SVM test-size. Float between 0.0 and 1.0
+  -h, --help                                                       show this help message and exit
+  -dd DATA_DIR, --data_dir DATA_DIR                                Directory where data is stored.
+  -fd FEATURE_DIR, --feature_dir FEATURE_DIR                       Directory where features are stored, i.e. output from FEX.
+  -ffd FFR_DIR, --ffr_dir FFR_DIR                                  Directory ffr_values are stores.
+  -ffn FFR_FILENAME, --ffr_filename FFR_FILENAME                   Filename for the file where ffr-values are stored.
+  -ffc FFR_CUT_OFF, --ffr_cut_off FFR_CUT_OFF                      Filename for the file where ffr-values are stored.
+  -f FOLDS, --folds FOLDS                                          Number of folds each iteration in cross-validation.
+  -i ITERATIONS, --iterations ITERATIONS                           Number of iterations to run cross-validation.
+  -fs {train,entire}, --feature_selection {train,entire}           Specification of FS should be performed on train set vs entire dataset
+  -c2 CHI2, --chi2 CHI2                                            kbest chi2. Default setting is set to all
+  -mi MUTUAL_INFORMATION, --mutual_information MUTUAL_INFORMATION  kbest mutual information. Default is set to all
+  -plt, --plot                                                     Specified if feature statistics (chi2 and MI) should be plotted
 ```
 A sequence of lines in the ffr_file can be
 ```bash
