@@ -42,7 +42,7 @@ usage: main.py CAE [-h] [-dd DATA_DIR] -ps PATCH_SIZE -po PATCH_OVERLAP -st {gri
                    [-pn {z-score,minmax,abs}] [-e EPOCHS] [-bs BATCH_SIZE] [-ts TEST_SIZE] [-pb] [-ld] [-md MODEL_DIR]
 
 optional arguments:
-  -h, --help                                                   show this help message and exit
+  -h, --help                                                   Show this help message and exit
   -dd DATA_DIR, --data_dir DATA_DIR                            Directory where data is stored.
   -ps PATCH_SIZE, --patch_size PATCH_SIZE                      Patch size 2D/3D: "(1,int,int)" or "(int,int,int)".
   -po PATCH_OVERLAP, --patch_overlap PATCH_OVERLAP             Patch overlap 2D/3D: (0,int,int) or (int,int,int). Must be even number and smaller than patch size.
@@ -97,7 +97,7 @@ usage: main.py FEX [-h] [-dd DATA_DIR] -md MODEL_DIR -mn MODEL_NAME -ps PATCH_SI
                    [-r RESAMPLE] [-c CLIPPING] [-pn {z-score,minmax,abs}] -eln ENCODED_LAYER_NUM [-spn START_PATIENT_NUM] [-sp]
 
 optional arguments:
-  -h, --help                                                              show this help message and exit
+  -h, --help                                                              Show this help message and exit
   -dd DATA_DIR, --data_dir DATA_DIR                                       Directory where data is stored.
   -md MODEL_DIR, --model_dir MODEL_DIR                                    Directory where model is stored.
   -mn MODEL_NAME, --model_name MODEL_NAME                                 Model name, i.e. "model_2D".
@@ -123,7 +123,7 @@ usage: main.py CLA [-h] [-dd DATA_DIR] -fd FEATURE_DIR [-ffd FFR_DIR] -ffn FFR_F
                    [-mi MUTUAL_INFORMATION] [-plt]
 
 optional arguments:
-  -h, --help                                                       show this help message and exit
+  -h, --help                                                       Show this help message and exit
   -dd DATA_DIR, --data_dir DATA_DIR                                Directory where data is stored.
   -fd FEATURE_DIR, --feature_dir FEATURE_DIR                       Directory where features are stored, i.e. output from FEX.
   -ffd FFR_DIR, --ffr_dir FFR_DIR                                  Directory ffr_values are stores.
