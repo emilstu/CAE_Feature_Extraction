@@ -1,5 +1,5 @@
 from tensorflow.python.ops.gen_batch_ops import batch
-#from automatic_segmentation import AutomaticSegmentation
+from automatic_segmentation import AutomaticSegmentation
 from clustering import Clustering
 from feature_extraction import FeatureExtraction
 from classifier import Classifier
@@ -39,7 +39,6 @@ def main(args):
     #-----------------------------------------------------#
     #               Patient classification                #
     #-----------------------------------------------------#
-    """
     if args.program=='AUS':
         asg = AutomaticSegmentation(    model_name=args.model_name,
                                         patch_size=ast.literal_eval(args.patch_size),
@@ -48,7 +47,6 @@ def main(args):
                                         model_dir=args.model_dir   )
         asg.run()
         asg.run_postprocessing()
-    """
 
     if args.program=='CLUS':
         clustering = Clustering(    num_iters=args.iterations,
