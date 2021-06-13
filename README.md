@@ -33,7 +33,7 @@ $ conda env create -f requirements.yml
 The results from the automatic segmentation and clustering will be saved in the patient folder for classification (marked output)
 
 ## Running the program
-All the data directories are by default set according to the recommended data structure. For programs using results from other programs (FeEx and SVM) some directories have to be specified.
+All the data directories are by default set according to the recommended data structure. For programs using results from other programs (FEX and CLA) some directories have to be specified
 ### 2D/3D Convolutional Autoencoder
 ```bash
 $ python3 main.py CAE -h
@@ -89,7 +89,7 @@ optional arguments:
   -nc NUM_CLUSTERS, --num_clusters NUM_CLUSTERS  Number of clusters.
 ```
 ### Feature Extraction
-Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). For each cluster, the maximum standard deviation is calculated. The result is a 1D list with the same size as the number of clusters.
+Features are extracted from the clusters by utilizing a trained CAE model (2D/3D). The features are saved in the same directory as the CAE model. 
 ```bash
 $ python3 main.py FeEx -h
 
@@ -115,7 +115,7 @@ optional arguments:
 ```
 Center-selection selects a cluster for a specific patch based on the center index of the patch. Highest_share-selection selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used. 
 ### Classification 
-The extracted features are classified using Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value
+The extracted features are classified using GPC and KNN. Patients are labeled based on ffr measurements according to a specified cut-of-value
 ```bash
 $ python3 main.py CLA -h
 
