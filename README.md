@@ -38,25 +38,26 @@ All the data directories are by default set according to the recommended data st
 ```bash
 $ python3 main.py CAE -h
 
-usage: main.py CAE [-h] [-dd DATA_DIR] -ps PATCH_SIZE -po PATCH_OVERLAP -st {grid,label} [-mlb MIN_LAB_VOX] [-lb LABEL_PROB]
-                        [-mp MAX_PATCHES] [-rs RESAMPLE] [-e EPOCHS][-bs BATCH_SIZE] [-ts TEST_SIZE] [-pp] [-ld] [-md MODEL_DIR]
+usage: main.py CAE [-h] [-dd DATA_DIR] -ps PATCH_SIZE -po PATCH_OVERLAP -st {grid,label} [-mlv MIN_LAB_VOX] [-lb LABEL_PROB] [-mp MAX_PATCHES] [-r RESAMPLE] [-c CLIPPING] [-pn {z-score,minmax,abs}] [-e EPOCHS] [-bs BATCH_SIZE] [-ts TEST_SIZE] [-pb] [-ld] [-md MODEL_DIR]
 
 optional arguments:
-  -h, --help                                        Show this help-message and exit.
-  -dd DATA_DIR, --data_dir DATA_DIR                 Directory where data is stored.
-  -ps PATCH_SIZE, --patch_size PATCH_SIZE           Patch size 2D/3D: "(1,int,int)" or "(int,int,int)".
-  -po PATCH_OVERLAP, --patch_overlap PATCH_OVERLAP  Patch overlap 2D/3D: (0,int,int) or (int,int,int). Must be even number and smaller than patch size.
-  -st {grid,label}, --sampler_type {grid,label}     Sampler-type.
-  -mlb MIN_LAB_VOX, --min_lab_vox MIN_LAB_VOX       Minimum labled voxels used by grid-sampler.
-  -lb LABEL_PROB, --label_prob LABEL_PROB           Probability of choosing patches with labeled voxel as center. Used by label-sampler.
-  -mp MAX_PATCHES, --max_patches MAX_PATCHES        Maximum number of patches to extract.
-  -rs RESAMPLE, --resample RESAMPLE                 Resample to common voxel spacing (float,float,float).
-  -e EPOCHS, --epochs EPOCHS                        Number of epochs used when training.
-  -bs BATCH_SIZE, --batch_size BATCH_SIZE           Batch-size used when training.
-  -ts TEST_SIZE, --test_size TEST_SIZE              CAE test-size. Float between 0.0 and 1.0.
-  -pp, --prepare_batches                            Specified when batches should be prepared and saved as mini-batches.
-  -ld, --load_data                                  Specified when patches should be loaded.
-  -md MODEL_DIR, --model_dir MODEL_DIR              Directory where model is stored. When specified predictions are made on the loaded model.
+  -h, --help                                                   show this help message and exit
+  -dd DATA_DIR, --data_dir DATA_DIR                            Directory where data is stored.
+  -ps PATCH_SIZE, --patch_size PATCH_SIZE                      Patch size 2D/3D: "(1,int,int)" or "(int,int,int)".
+  -po PATCH_OVERLAP, --patch_overlap PATCH_OVERLAP             Patch overlap 2D/3D: (0,int,int) or (int,int,int). Must be even number and smaller than patch size.
+  -st {grid,label}, --sampler_type {grid,label}                Sampler type
+  -mlv MIN_LAB_VOX, --min_lab_vox MIN_LAB_VOX                  Minimum labled voxels used by grid-sampler.
+  -lb LABEL_PROB, --label_prob LABEL_PROB                      Probability of choosing patches with labeled voxel as center. Used by label-sampler.
+  -mp MAX_PATCHES, --max_patches MAX_PATCHES                   Maximum number of patches to extract.
+  -r RESAMPLE, --resample RESAMPLE                             Resample to common voxel spacing "(float,float,float)".
+  -c CLIPPING, --clipping CLIPPING                             Clipping range: "(int, int)"
+  -pn {z-score,minmax,abs}, --pixel_norm {z-score,minmax,abs}  Pixel normalization type
+  -e EPOCHS, --epochs EPOCHS                                   Number of epochs in training of CAE.
+  -bs BATCH_SIZE, --batch_size BATCH_SIZE                      Batch size for training.
+  -ts TEST_SIZE, --test_size TEST_SIZE                         CAE test size. Float between 0.0 and 1.0.
+  -pb, --prepare_batches                                       Specified when batches should be prepared and saved as mini-batches.
+  -ld, --load_data                                             Specified when patches should be loaded.
+  -md MODEL_DIR, --model_dir MODEL_DIR                         Directory where model is stored. When specified predictions are made on the loaded model.
 ```
 ### Automatic segmentation
 The automatic segmentation is based on [MIScnn](https://github.com/frankkramer-lab/MIScnn). 
@@ -91,22 +92,25 @@ Features are extracted from the clusters by utilizing a trained CAE model (2D/3D
 ```bash
 $ python3 main.py FeEx -h
 
-usage: main.py FeEx [-h] [-dd DATA_DIR] -md MODEL_DIR -mn MODEL_NAME -ps PATCH_SIZE [-po PATCH_OVERLAP] 
-                         [-cs {center,highest_share}] -nc NUM_CLUSTERS [-rs RESAMPLE] -elm ENCODED_LAYER_NUM
+usage: main.py FEX [-h] [-dd DATA_DIR] -md MODEL_DIR -mn MODEL_NAME -ps PATCH_SIZE [-po PATCH_OVERLAP] [-mlv MIN_LAB_VOX] [-cs {center,highest_share}] -nc NUM_CLUSTERS[-r RESAMPLE] [-c CLIPPING] [-pn {z-score,minmax,abs}] -eln ENCODED_LAYER_NUM [-spn START_PATIENT_NUM] [-sp]
 
 optional arguments:
-  -h, --help                                                              Show this help-message and exit.
+  -h, --help                                                              show this help message and exit
   -dd DATA_DIR, --data_dir DATA_DIR                                       Directory where data is stored.
   -md MODEL_DIR, --model_dir MODEL_DIR                                    Directory where model is stored.
   -mn MODEL_NAME, --model_name MODEL_NAME                                 Model name, i.e. "model_2D".
   -ps PATCH_SIZE, --patch_size PATCH_SIZE                                 Patch size 3D/3D: "(1,int,int)" or "(int,int,int)".
   -po PATCH_OVERLAP, --patch_overlap PATCH_OVERLAP                        Patch overlap 2D/3D: "(0,int,int)" or "(int,int,int)". Must be even number and smaller than patch size.
-  -cs {center,highest_share}, --cluster_selection {center,highest_share}  Method used to choose which cluster a specific patch belongs to.
-  -nc NUM_CLUSTERS, --num_clusters NUM_CLUSTERS                           Number of clusters.
-  -rs RESAMPLE, --resample RESAMPLE                                       Resample to common voxel spacing (float,float,float).
-  -elm ENCODED_LAYER_NUM, --encoded_layer_num ENCODED_LAYER_NUM           Number of the encoded layer from CAE-architecture counting from the bottom.
+  -mlv MIN_LAB_VOX, --min_lab_vox MIN_LAB_VOX                             Minimum labled voxels used by grid-sampler.
+  -cs {center,highest_share}, --cluster_selection {center,highest_share}  Method used to select which cluster a specific patch belongs to.
+  -nc NUM_CLUSTERS, --num_clusters NUM_CLUSTERS                           Number og clusters used in the images to extract features from.
+  -r RESAMPLE, --resample RESAMPLE                                        Resample to common voxel spacing "(float,float,float)".
+  -c CLIPPING, --clipping CLIPPING                                        Clipping range: "(int, int)"
+  -pn {z-score,minmax,abs}, --pixel_norm {z-score,minmax,abs}             Pixel normalization type
+  -eln ENCODED_LAYER_NUM, --encoded_layer_num ENCODED_LAYER_NUM           Number of the encoded layer in CAE-architecture counting from the bottom.
+  -spn START_PATIENT_NUM, --start_patient_num START_PATIENT_NUM           Starting point of the patient in patient data dir.
+  -sp, --save_patches                                                     Specified if patches should be saved to disk.
 ```
-
 Center-selection selects a cluster for a specific patch based on the center index of the patch. Highest_share-selection selects a cluster for a specific patch based on the highest share of voxels. If the background has the highest share of voxels, the patch isn't used. 
 ### SVM-classification 
 The extracted features are classified using Support Vector Machines. Patients are labeled based on ffr measurements according to a specified cut-of-value
