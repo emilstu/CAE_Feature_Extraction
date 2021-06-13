@@ -13,6 +13,7 @@ from collections import Counter
 from collections import defaultdict
 import json
 import csv
+from scipy.stats import stats
 
 def get_nifti_filepaths(dir):
     filepaths=glob.glob(dir + '*.nii.gz')
@@ -111,7 +112,7 @@ def save_svm_results(accuracy, precision, recall, out_dir):
 
 def save_features(features, patient, out_dir): 
     # Append feature to file
-    with open(f'{out_dir}results/{patient}.csv', 'w', newline='') as f:
+    with open(f'{out_dir}{patient}.csv', 'w', newline='') as f:
         wr=csv.writer(f)
         wr.writerow(features)
     
@@ -142,22 +143,27 @@ def get_fe_patch_dir(patch_size):
         dir+='2D/'
     else:
         dir+='3D/'
-    dir+='patches/'
+    dir+='batches/'
     return dir
 
 def load_features(feature_dir):
     print('Loading features...')
     features = []
-    files = [f'{feature_dir}{f}' for f in os.listdir(feature_dir)]
-    print(files)
+
+    files=[]
+    for file in os.listdir(feature_dir):
+        if file.endswith('.csv'):
+            files.append(f'{feature_dir}{file}')
+    files.sort()
+
     for file in files:     
         f=open(file, 'r')
         feature = f.read().strip('\n').split(',')
         features.append(list(feature))
         f.close()
-    # Convert to numpy 
+    # Convert to numpy
     features = np.asarray(features, dtype=np.float64)
-    print(features.shape)
+
     return features
 
 def save_partition(partition, save_dir):
@@ -173,7 +179,7 @@ def load_partition(prepare_batches, patch_size):
 
 def get_cae_patch_dir(prepare_batches, patch_size):
     dir=f'tmp/CAE/'
-    if patch_size[0]==1:
+    if 1 in patch_size:
         dir+='2D/'
     else:
         dir+='3D/'
@@ -204,8 +210,6 @@ def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_cut_off=0
         if patient in classification_patients:
             ffr = float(split[-1])
             patient_values[patient].append(ffr)
-        
-    print(patient_values)
     target = []
     num = 0
     for values in patient_values.values():
@@ -219,7 +223,7 @@ def ffr_values_to_target_list(ffr_dir, ffr_filename, pc_input_dir, ffr_cut_off=0
     print('\nPatients with signficant stenosis: ', len(target)-num)
     print('Patients without signficant stenosis: ', num)
 
-    return target
+    return np.asarray(target)
 
 
 def delete_tmp_files():
@@ -273,10 +277,48 @@ def update_affine(img_filename, labelmap_filename):
     new_img = nib.Nifti1Image(labelmap_data, img.affine, img.header)
     nib.save(new_img, labelmap_filename)
 
-def normalize_data(data):
-    new_data = data.astype('float32') / np.max(data)
-    return new_data
+
+def normalize_data(filenames, norm='z-score'):
+    images = []
+    headers = []
+    affines = []
+    norm_filenames = []
+    for i in range(len(filenames)):
+        img=nib.load(filenames[i])
+        img_data=img.get_fdata()
+        images.append(img_data)
+        headers.append(img.header)
+        affines.append(img.affine)
+        norm_filenames.append(f'{filenames[i].rsplit("/", 1)[0]}/{norm}_norm.nii.gz')
+    
+    img_array=np.concatenate([x.ravel() for x in images])
+    std=np.std(img_array)
+    mean=np.mean(img_array)
+    for i in range(len(images)):
+        if norm=='minmax': n_img = (images[i] - img_array.min()) / (img_array.max() - img_array.min())
+        if norm=='z-score': n_img= (images[i] - mean) / (std)
+        new_img = nib.Nifti1Image(n_img, affines[i], headers[i])
+        nib.save(new_img, norm_filenames[i])
+    return norm_filenames
 
 def resample_volume(img, voxel_size):
     resampled_img = nib.processing.resample_to_output(img, voxel_size)
     return resampled_img
+
+def clipping(filenames, clipping=()):
+    images = []
+    headers = []
+    affines = []
+    norm_filenames = []
+    for i in range(len(filenames)):
+        img=nib.load(filenames[i])
+        img_data=img.get_fdata()
+        img_data = np.clip(img_data, int(clipping[0]), int(clipping[1]))    
+        images.append(img_data)
+        headers.append(img.header)
+        affines.append(img.affine)
+        norm_filenames.append(f'{filenames[i].rsplit("/", 1)[0]}/clipped_{str(clipping[0])}_{str(clipping[1])}.nii.gz')
+    for i in range(len(images)):
+        new_img = nib.Nifti1Image(images[i], affines[i], headers[i])
+        nib.save(new_img, norm_filenames[i])
+    return norm_filenames

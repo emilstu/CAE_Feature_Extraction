@@ -9,7 +9,6 @@ dependencies:
   - pip:
     - tensorflow
     - Keras
-    - miscnn
     - nibabel
     - scikit-image
     - scikit-learn

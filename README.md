@@ -83,7 +83,7 @@ usage: main.py CLUS [-h] [-dd DATA_DIR] -i ITERATIONS -nc NUM_CLUSTERS
 optional arguments:
   -h, --help                                     Show this help-message and exit.
   -dd DATA_DIR, --data_dir DATA_DIR              Directory where data is stored.
-  -i ITERATIONS, --iterations ITERATIONS         Number of iterations to run-kmeans clustering.
+  -i ITERATIONS, --iterations ITERATIONS         Number of iterations to run k-means clustering.
   -nc NUM_CLUSTERS, --num_clusters NUM_CLUSTERS  Number of clusters.
 ```
 ### Feature Extraction
